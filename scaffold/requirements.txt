@@ -1,0 +1,19 @@
+# Core scientific computing
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Symbolic math and verification
+sympy>=1.12
+
+# HTTP requests (for LLM API calls)
+requests>=2.28.0
+
+# For the obligation store SHA1 keying and JSON persistence
+# (stdlib only — no extra package needed)
+
+# Optional but recommended
+# z3-solver           # SMT verifier (install separately: pip install z3-solver)
+# hypothesis          # Property-based counterexample testing
+# sentence-transformers  # Semantic embeddings for cross-domain matching
+# torch               # Required for sentence-transformers
+# faiss-cpu           # Fast similarity search for obligation store retrieval

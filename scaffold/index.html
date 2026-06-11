@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bri</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap');
+:root{--bg:#0d0f14;--sf:#161920;--sf2:#1c2028;--bd:#232830;--bd2:#2d3440;--tx:#c8cdd6;--dm:#5a6272;--ac:#6ea8fe;--ac2:#3d7eff;--gr:#4ade80;--am:#fbbf24;--rd:#f87171;--pu:#a78bfa;--mn:'JetBrains Mono',monospace;--ss:'Inter',system-ui,sans-serif;--r:6px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--tx);font-family:var(--ss);font-size:14px;min-height:100vh;display:flex;flex-direction:column;}
+.hdr{border-bottom:1px solid var(--bd);background:var(--sf);padding:0 18px;display:flex;align-items:center;gap:12px;height:50px;position:sticky;top:0;z-index:100;}
+.hname{font-size:15px;font-weight:600;color:#fff;}
+.htag{font-size:12px;color:var(--dm);flex:1;}
+.spill{font-family:var(--mn);font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid var(--bd2);color:var(--dm);display:flex;align-items:center;gap:5px;}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--dm);}
+.sdot.live{background:var(--gr);box-shadow:0 0 4px var(--gr);}
+.about{background:linear-gradient(135deg,#0d1117,#111827);border-bottom:1px solid var(--bd);padding:28px 20px;display:none;}
+.about.on{display:block;}
+.ai{max-width:680px;margin:0 auto;}
+.ai h2{font-size:18px;font-weight:600;color:#fff;margin-bottom:10px;}
+.ai p{color:#8892a4;line-height:1.75;margin-bottom:10px;font-size:13.5px;}
+.ai p:last-child{margin-bottom:0;}
+.ai strong{color:var(--tx);font-weight:500;}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}
+.pill{background:var(--sf2);border:1px solid var(--bd2);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--dm);}
+.main{flex:1;display:grid;grid-template-columns:195px 1fr 290px;grid-template-rows:1fr 62px;max-height:calc(100vh - 50px);overflow:hidden;}
+.left,.right{display:flex;flex-direction:column;overflow-y:auto;}
+.left{border-right:1px solid var(--bd);}
+.right{border-left:1px solid var(--bd);}
+.ps{padding:11px 12px;border-bottom:1px solid var(--bd);}
+.pl{font-family:var(--mn);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--dm);margin-bottom:8px;}
+.phinum{font-family:var(--mn);font-size:24px;font-weight:300;color:var(--ac);line-height:1;margin-bottom:3px;}
+.phisub{font-size:10px;color:var(--dm);line-height:1.5;}
+.btrack{height:2px;background:var(--bd2);border-radius:2px;margin-top:6px;overflow:hidden;}
+.bfill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--ac2),var(--ac));transition:width 1.2s;}
+.bitem{padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px;color:var(--dm);line-height:1.4;display:flex;gap:5px;align-items:flex-start;}
+.bitem:last-child{border-bottom:none;}
+.bdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.iitem{padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px;color:var(--dm);line-height:1.4;}
+.iitem:last-child{border-bottom:none;}
+/* Right panel — tabbed */
+.tabs{display:flex;border-bottom:1px solid var(--bd);}
+.tab{flex:1;padding:8px 4px;font-size:11px;color:var(--dm);text-align:center;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.tab.on{color:var(--ac);border-bottom-color:var(--ac);}
+.tab-panel{display:none;flex:1;overflow-y:auto;flex-direction:column;}
+.tab-panel.on{display:flex;}
+/* Stats rows */
+.wsrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11px;color:var(--dm);border-bottom:1px solid var(--bd);}
+.wsrow:last-child{border-bottom:none;}
+.wsval{font-size:11px;color:var(--tx);}
+.trow{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:10px;color:var(--dm);}
+.tbar{height:2px;background:var(--ac2);border-radius:1px;min-width:2px;transition:width .5s;}
+.cnum{font-family:var(--mn);font-size:20px;font-weight:300;color:var(--gr);line-height:1;margin-bottom:3px;}
+.csub{font-size:10px;color:var(--dm);}
+/* Stage badge */
+.stage{display:inline-block;font-family:var(--mn);font-size:10px;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.06em;}
+.stage.TRAINING{background:rgba(251,191,36,.1);color:var(--am);border:1px solid rgba(251,191,36,.2);}
+.stage.ASSISTING{background:rgba(110,168,254,.1);color:var(--ac);border:1px solid rgba(110,168,254,.2);}
+.stage.PRIMARY{background:rgba(74,222,128,.1);color:var(--gr);border:1px solid rgba(74,222,128,.2);}
+/* Progress chart */
+.chart-wrap{height:80px;position:relative;margin:8px 0;}
+.chart-canvas{width:100%;height:100%;}
+.prog-stat{display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:var(--dm);border-bottom:1px solid var(--bd);}
+.prog-stat:last-child{border-bottom:none;}
+.prog-val{color:var(--tx);font-family:var(--mn);font-size:11px;}
+.prog-delta{font-family:var(--mn);font-size:10px;}
+.prog-delta.up{color:var(--gr);}
+.prog-delta.dn{color:var(--rd);}
+/* Auto log */
+.auto-item{padding:5px 0;border-bottom:1px solid var(--bd);font-size:11px;color:var(--dm);line-height:1.4;}
+.auto-item:last-child{border-bottom:none;}
+.auto-v{color:var(--gr);}
+.auto-u{color:var(--dm);}
+/* Chat */
+.chat{display:flex;flex-direction:column;overflow:hidden;}
+.msgs{flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:16px;}
+.msgs::-webkit-scrollbar{width:3px;}
+.msgs::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
+.msg{max-width:640px;animation:up .2s ease;}
+@keyframes up{from{opacity:0;transform:translateY(5px)}}
+.msg.user{align-self:flex-end;}
+.msg.sys{align-self:flex-start;}
+.bubble{padding:11px 15px;border-radius:var(--r);line-height:1.75;font-size:14px;}
+.msg.user .bubble{background:var(--sf2);border:1px solid var(--bd2);}
+.msg.sys .bubble{background:transparent;border:1px solid var(--bd);}
+.mfoot{display:flex;align-items:center;gap:6px;margin-top:5px;font-family:var(--mn);font-size:10px;color:var(--dm);}
+.tag{padding:1px 6px;border-radius:3px;font-family:var(--mn);font-size:9px;text-transform:uppercase;letter-spacing:.05em;}
+.tv{background:rgba(74,222,128,.1);color:var(--gr);border:1px solid rgba(74,222,128,.2);}
+.tu{background:rgba(248,113,113,.1);color:var(--rd);border:1px solid rgba(248,113,113,.2);}
+.ta{background:rgba(110,168,254,.1);color:var(--ac);border:1px solid rgba(110,168,254,.2);}
+.trace{margin-top:7px;border:1px solid var(--bd);border-radius:4px;overflow:hidden;display:none;}
+.trace.on{display:block;}
+.trace-hdr{padding:5px 9px;background:var(--sf2);font-family:var(--mn);font-size:10px;color:var(--dm);cursor:pointer;display:flex;justify-content:space-between;}
+.trace-hdr:hover{color:var(--tx);}
+.trace-body{padding:9px;font-family:var(--mn);font-size:11px;color:var(--dm);line-height:1.6;white-space:pre-wrap;}
+.thinking .bubble{border-style:dashed;color:var(--dm);font-style:italic;}
+.dots span{animation:blink 1.2s infinite;}
+.dots span:nth-child(2){animation-delay:.2s;}.dots span:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,80%,100%{opacity:1}40%{opacity:0}}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px;}
+.ei{font-size:30px;opacity:.12;}.et{color:var(--dm);font-size:14px;}
+.echips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:440px;}
+.ec{background:var(--sf2);border:1px solid var(--bd2);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--dm);cursor:pointer;transition:all .15s;}
+.ec:hover{border-color:var(--ac);color:var(--ac);}
+.input-row{grid-column:1/-1;border-top:1px solid var(--bd);background:var(--bg);display:flex;align-items:center;padding:0 12px;gap:8px;height:62px;}
+.dsel{background:var(--sf2);border:1px solid var(--bd2);color:var(--dm);font-family:var(--mn);font-size:11px;padding:5px 8px;border-radius:var(--r);outline:none;flex-shrink:0;}
+.minput{flex:1;background:transparent;border:none;outline:none;color:var(--tx);font-family:var(--ss);font-size:14px;padding:8px 0;}
+.minput::placeholder{color:var(--dm);}
+.optin-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0;cursor:pointer;}
+.olbl{font-size:11px;color:var(--dm);white-space:nowrap;}
+.tog{width:28px;height:16px;border-radius:8px;background:var(--bd2);position:relative;transition:background .2s;flex-shrink:0;cursor:pointer;}
+.tog.on{background:var(--ac2);}
+.tog::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:6px;background:#fff;transition:left .2s;}
+.tog.on::after{left:14px;}
+.sbtn{background:var(--ac2);border:none;color:#fff;font-family:var(--mn);font-size:11px;letter-spacing:.06em;padding:7px 14px;border-radius:var(--r);cursor:pointer;transition:background .15s;text-transform:uppercase;flex-shrink:0;}
+.sbtn:hover:not(:disabled){background:var(--ac);}
+.sbtn:disabled{opacity:.35;cursor:not-allowed;}
+.abtn{background:transparent;border:1px solid var(--bd2);color:var(--dm);font-size:11px;padding:5px 10px;border-radius:var(--r);cursor:pointer;transition:all .15s;flex-shrink:0;}
+.abtn:hover{border-color:var(--dm);color:var(--tx);}
+@media(max-width:900px){.main{grid-template-columns:1fr;}.left,.right{display:none;}.input-row{grid-column:1;}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <span class="hname">Bri</span>
+  <span class="htag">Reasoning AI — thinks in steps, questions itself, learns from everyone</span>
+  <button class="abtn" onclick="toggleAbout()">About</button>
+  <div class="spill"><div class="sdot" id="sdot"></div><span id="stext">connecting</span></div>
+</header>
+
+<div class="about" id="about">
+  <div class="ai">
+    <h2>What is Bri?</h2>
+    <p>Bri is a reasoning AI — not a chatbot. It thinks through questions step by step and speaks from the understanding that produces. The reasoning happens internally — what you see is the result, expressed naturally. You can expand the reasoning trace below any response if you want to see how it got there.</p>
+    <p>Bri maintains <strong>beliefs</strong> about different domains and revises them when they fail. It has a background process running continuously — integrating everything it has learned, finding connections across domains, and asking itself questions even when no one is talking to it. The right panel shows this activity in real time.</p>
+    <p>When you opt in, your verified exchanges contribute to shared learning that improves Bri for everyone. You can opt out at any time.</p>
+    <div class="pills">
+      <span class="pill">Reasons before speaking</span>
+      <span class="pill">Revises its own beliefs</span>
+      <span class="pill">Self-questions when idle</span>
+      <span class="pill">Learns from collective use</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Left: Phi + Beliefs + Insights -->
+  <div class="left">
+    <div class="ps">
+      <div class="pl">Integration (Φ)</div>
+      <div class="phinum" id="phi-v">—</div>
+      <div class="phisub">How unified the system's processing is.</div>
+      <div class="btrack"><div class="bfill" id="phi-b" style="width:0%"></div></div>
+    </div>
+    <div class="ps" style="flex:1;overflow-y:auto">
+      <div class="pl">Beliefs Under Question</div>
+      <div id="blist"><div class="bitem">Loading...</div></div>
+    </div>
+    <div class="ps" style="flex:1;overflow-y:auto">
+      <div class="pl">Spontaneous Insights</div>
+      <div id="ilist"><div class="iitem">Accumulating...</div></div>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat">
+    <div class="msgs" id="msgs">
+      <div class="empty" id="empty">
+        <div class="ei">◈</div>
+        <div class="et">Ask anything — Bri will think it through</div>
+        <div class="echips">
+          <div class="ec" onclick="use(this)">Why do galaxies have flat rotation curves?</div>
+          <div class="ec" onclick="use(this)">What are common themes of good across religions?</div>
+          <div class="ec" onclick="use(this)">How does consciousness relate to physical processes?</div>
+          <div class="ec" onclick="use(this)">Explain natural selection from first principles</div>
+          <div class="ec" onclick="use(this)">Help me think through a difficult decision</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: tabbed panel -->
+  <div class="right">
+    <div class="tabs">
+      <div class="tab on" onclick="showTab('state')">State</div>
+      <div class="tab" onclick="showTab('progress')">Progress</div>
+      <div class="tab" onclick="showTab('training')">Training</div>
+      <div class="tab" onclick="showTab('auto')">Self</div>
+    </div>
+
+    <!-- State tab -->
+    <div class="tab-panel on" id="tab-state">
+      <div class="ps">
+        <div class="pl">Current State</div>
+        <div class="wsrow"><span>emotion</span><span class="wsval" id="ws-em">—</span></div>
+        <div class="wsrow"><span>engagement</span><span class="wsval" id="ws-en">—</span></div>
+        <div class="wsrow"><span>DMN cycles</span><span class="wsval" id="ws-cy">—</span></div>
+        <div class="wsrow"><span>Φ trend</span><span class="wsval" id="ws-tr">—</span></div>
+        <div class="wsrow"><span>open question</span><span class="wsval" id="ws-oq" style="max-width:120px;text-align:right;font-size:10px;line-height:1.3">—</span></div>
+      </div>
+      <div class="ps" style="flex:1;overflow-y:auto">
+        <div class="pl">Personality</div>
+        <div id="traits"></div>
+      </div>
+      <div class="ps">
+        <div class="pl">Collective Learning</div>
+        <div class="cnum" id="cn">—</div>
+        <div class="csub">verified contributions from all users</div>
+        <div class="btrack" style="margin-top:6px"><div class="bfill" id="cb" style="width:0%;background:linear-gradient(90deg,var(--gr),var(--ac))"></div></div>
+      </div>
+    </div>
+
+    <!-- Progress tab -->
+    <div class="tab-panel" id="tab-progress">
+      <div class="ps">
+        <div class="pl">Improvement Over Time</div>
+        <canvas class="chart-canvas" id="phi-chart" height="70"></canvas>
+      </div>
+      <div class="ps">
+        <div class="pl">Totals</div>
+        <div class="prog-stat"><span>Verified answers</span><span class="prog-val" id="pr-verified">—</span></div>
+        <div class="prog-stat"><span>Beliefs stored</span><span class="prog-val" id="pr-beliefs">—</span></div>
+        <div class="prog-stat"><span>Beliefs questioning</span><span class="prog-val" id="pr-q">—</span></div>
+        <div class="prog-stat"><span>DMN cycles</span><span class="prog-val" id="pr-cycles">—</span></div>
+        <div class="prog-stat"><span>Running for</span><span class="prog-val" id="pr-hours">—</span></div>
+      </div>
+      <div class="ps">
+        <div class="pl">Domain Depth</div>
+        <div id="domains"></div>
+      </div>
+    </div>
+
+    <!-- Training tab -->
+    <div class="tab-panel" id="tab-training">
+      <div class="ps">
+        <div class="pl">500MB Model</div>
+        <div id="tr-stage" style="margin-bottom:8px">—</div>
+        <div class="wsrow"><span>examples collected</span><span class="wsval" id="tr-ex">—</span></div>
+        <div class="wsrow"><span>verify rate</span><span class="wsval" id="tr-vr">—</span></div>
+        <div class="wsrow"><span>backend</span><span class="wsval" id="tr-be">—</span></div>
+        <div class="wsrow"><span>model saved</span><span class="wsval" id="tr-saved">—</span></div>
+      </div>
+      <div class="ps" style="flex:1;overflow-y:auto">
+        <div class="pl">Verify Rate History</div>
+        <canvas class="chart-canvas" id="vr-chart" height="70"></canvas>
+        <div id="tr-history" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- Self-questioning tab -->
+    <div class="tab-panel" id="tab-auto">
+      <div class="ps">
+        <div class="pl">Autonomous Activity</div>
+        <div class="wsrow"><span>questions asked</span><span class="wsval" id="au-total">—</span></div>
+        <div class="wsrow"><span>verified answers</span><span class="wsval" id="au-verified">—</span></div>
+        <div class="wsrow"><span>last question</span><span class="wsval" id="au-last" style="max-width:120px;text-align:right;font-size:10px;line-height:1.3">—</span></div>
+        <div class="wsrow"><span>status</span><span class="wsval" id="au-status">—</span></div>
+      </div>
+      <div class="ps" style="flex:1;overflow-y:auto">
+        <div class="pl">Recent Self-Questions</div>
+        <div id="au-log"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-row">
+    <select class="dsel" id="dsel">
+      <option value="general">general</option>
+      <option value="physics">physics</option>
+      <option value="mathematics">mathematics</option>
+      <option value="philosophy">philosophy</option>
+      <option value="biology">biology</option>
+      <option value="economics">economics</option>
+      <option value="computer_science">cs</option>
+      <option value="writing">writing</option>
+      <option value="planning">planning</option>
+    </select>
+    <input class="minput" id="inp" placeholder="Ask anything..." autocomplete="off">
+    <div class="optin-wrap" onclick="toggleOptin()" title="When on, your verified answers help improve Bri for everyone">
+      <div class="tog on" id="tog"></div>
+      <span class="olbl" id="otxt">Contributing</span>
+    </div>
+    <button class="abtn" onclick="toggleAbout()">?</button>
+    <button class="sbtn" id="sbtn" onclick="send()">Send</button>
+  </div>
+</div>
+
+<script>
+const API=window.location.origin;
+let ws=null,busy=false;
+let optedIn=localStorage.getItem('sc_optin')!=='false';
+let aboutOn=localStorage.getItem('sc_about')!=='false';
+window._sEl=null; window._sTxt='';
+
+function init(){
+  updateOptin();
+  if(aboutOn) document.getElementById('about').classList.add('on');
+  connectWS(); pollStatus(); setInterval(pollStatus,8000);
+}
+
+function showTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const names=['state','progress','training','auto'];
+    t.classList.toggle('on',names[i]===name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('tab-'+name)?.classList.add('on');
+}
+
+function connectWS(){
+  const p=location.protocol==='https:'?'wss':'ws';
+  ws=new WebSocket(`${p}://${location.host}/ws`);
+  ws.onopen=()=>{document.getElementById('sdot').classList.add('live');document.getElementById('stext').textContent='live';};
+  ws.onmessage=(e)=>{
+    const m=JSON.parse(e.data);
+    if(m.type==='reasoning_start'||m.type==='thinking'){
+      removeThinking();window._sTxt='';window._sEl=startStream();
+    } else if(m.type==='token'){
+      if(!window._sEl){window._sEl=startStream();window._sTxt='';}
+      window._sTxt+=m.content; updateStream(window._sEl,window._sTxt);
+    } else if(m.type==='response_end'||m.type==='response'){
+      const content=m.content||window._sTxt||'';
+      if(window._sEl){finaliseStream(window._sEl,content,m);}
+      else{removeThinking();addMsg('sys',content,m);}
+      window._sEl=null;window._sTxt='';
+      busy=false;document.getElementById('sbtn').disabled=false;
+    } else if(m.type==='error'){
+      if(window._sEl){window._sEl.remove();window._sEl=null;}
+      removeThinking();addMsg('sys','⚠ '+m.content,{});
+      busy=false;document.getElementById('sbtn').disabled=false;
+    }
+  };
+  ws.onclose=()=>{document.getElementById('sdot').classList.remove('live');document.getElementById('stext').textContent='reconnecting';setTimeout(connectWS,3000);};
+}
+
+function send(){
+  const inp=document.getElementById('inp'),d=document.getElementById('dsel').value,q=inp.value.trim();
+  if(!q||busy) return;
+  document.getElementById('empty')?.remove();
+  addMsg('user',q,{}); inp.value='';
+  addThinking(); busy=true; document.getElementById('sbtn').disabled=true;
+  if(ws&&ws.readyState===1){ws.send(JSON.stringify({question:q,domain:d,opted_in:optedIn}));}
+  else{
+    fetch(API+'/ask',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question:q,domain:d,opted_in:optedIn})})
+    .then(r=>r.json()).then(d=>{removeThinking();addMsg('sys',d.response||d.error||'',d);busy=false;document.getElementById('sbtn').disabled=false;})
+    .catch(e=>{removeThinking();addMsg('sys','Error: '+e.message,{});busy=false;document.getElementById('sbtn').disabled=false;});
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&document.activeElement.id==='inp'){e.preventDefault();send();}});
+function use(el){document.getElementById('inp').value=el.textContent;document.getElementById('inp').focus();}
+
+let msgId=0;
+function addMsg(role,content,meta){
+  document.getElementById('empty')?.remove();
+  const msgs=document.getElementById('msgs'),id='m'+(++msgId);
+  const text=(content||'').replace(/\n/g,'<br>');
+  let foot='';
+  if(role==='sys'){
+    const tags=[];
+    if(meta.automatic) tags.push('<span class="tag ta">instant</span>');
+    else if(meta.verified===true) tags.push('<span class="tag tv">verified</span>');
+    else if(meta.verified===false) tags.push('<span class="tag tu">unverified</span>');
+    if(meta.confidence&&meta.confidence!='UNCERTAIN') tags.push(`<span style="font-size:10px;color:var(--dm)">${meta.confidence.toLowerCase()}</span>`);
+    if(meta.phi) tags.push(`<span style="font-family:var(--mn);font-size:9px;color:var(--dm)">Φ ${Number(meta.phi).toFixed(3)}</span>`);
+    if(meta.reasoning_trace&&meta.reasoning_trace.length>10){
+      tags.push(`<span style="cursor:pointer;color:var(--dm);font-size:10px" onclick="toggleTrace('${id}')">show reasoning ↓</span>`);
+      foot=`<div class="mfoot">${tags.join('')}</div><div class="trace" id="tr-${id}"><div class="trace-hdr" onclick="toggleTrace('${id}')"><span>Reasoning</span><span>↑ hide</span></div><div class="trace-body">${(meta.reasoning_trace||'')}</div></div>`;
+    } else if(tags.length){foot=`<div class="mfoot">${tags.join('')}</div>`;}
+  }
+  const el=document.createElement('div');
+  el.className='msg '+role; el.id=id;
+  el.innerHTML=`<div class="bubble">${text}</div>${foot}`;
+  msgs.appendChild(el); msgs.scrollTop=msgs.scrollHeight;
+}
+function toggleTrace(id){document.getElementById('tr-'+id)?.classList.toggle('on');}
+
+function startStream(){
+  document.getElementById('empty')?.remove();
+  const msgs=document.getElementById('msgs');
+  const el=document.createElement('div'); el.className='msg sys'; el.id='stream-msg';
+  el.innerHTML='<div class="bubble"></div>';
+  msgs.appendChild(el); return el;
+}
+function updateStream(el,text){
+  const b=el.querySelector('.bubble');
+  if(b){b.innerHTML=text.replace(/\n/g,'<br>');document.getElementById('msgs').scrollTop=9999;}
+}
+function finaliseStream(el,text,meta){
+  el.id=''; const b=el.querySelector('.bubble');
+  if(b) b.innerHTML=(text||'').replace(/\n/g,'<br>');
+  const tags=[];
+  if(meta.automatic) tags.push('<span class="tag ta">instant</span>');
+  else if(meta.verified===true) tags.push('<span class="tag tv">verified</span>');
+  else if(meta.verified===false) tags.push('<span class="tag tu">unverified</span>');
+  if(meta.confidence&&meta.confidence!='UNCERTAIN') tags.push(`<span style="font-size:10px;color:var(--dm)">${meta.confidence.toLowerCase()}</span>`);
+  if(meta.phi) tags.push(`<span style="font-family:var(--mn);font-size:9px;color:var(--dm)">Phi ${Number(meta.phi).toFixed(3)}</span>`);
+  if(tags.length) el.insertAdjacentHTML('beforeend',`<div class="mfoot">${tags.join('')}</div>`);
+}
+function addThinking(){
+  const el=document.createElement('div');el.className='msg sys thinking';el.id='thinking';
+  el.innerHTML='<div class="bubble">Thinking<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>';
+  document.getElementById('msgs').appendChild(el);document.getElementById('msgs').scrollTop=9999;
+}
+function removeThinking(){document.getElementById('thinking')?.remove();}
+
+function toggleOptin(){optedIn=!optedIn;localStorage.setItem('sc_optin',optedIn);updateOptin();}
+function updateOptin(){
+  document.getElementById('tog').className=optedIn?'tog on':'tog';
+  document.getElementById('otxt').textContent=optedIn?'Contributing':'Private';
+  document.getElementById('otxt').style.color=optedIn?'var(--ac)':'var(--dm)';
+}
+function toggleAbout(){aboutOn=!aboutOn;localStorage.setItem('sc_about',aboutOn);document.getElementById('about').classList.toggle('on',aboutOn);}
+
+// ── Mini sparkline chart ───────────────────────────────
+function drawSparkline(canvasId, values, color){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas||!values||values.length<2) return;
+  const ctx=canvas.getContext('2d');
+  const w=canvas.offsetWidth||canvas.width, h=canvas.offsetHeight||70;
+  canvas.width=w; canvas.height=h;
+  ctx.clearRect(0,0,w,h);
+  const min=Math.min(...values), max=Math.max(...values);
+  const range=max-min||0.001;
+  const px=i=>Math.round(i*(w-4)/(values.length-1)+2);
+  const py=v=>Math.round(h-4-(v-min)/range*(h-8));
+  ctx.beginPath();ctx.strokeStyle=color||'#6ea8fe';ctx.lineWidth=1.5;ctx.lineJoin='round';
+  values.forEach((v,i)=>i===0?ctx.moveTo(px(i),py(v)):ctx.lineTo(px(i),py(v)));
+  ctx.stroke();
+  // Fill
+  ctx.lineTo(px(values.length-1),h);ctx.lineTo(px(0),h);ctx.closePath();
+  ctx.fillStyle=ctx.createLinearGradient(0,0,0,h);
+  ctx.fillStyle.addColorStop?.(0,(color||'#6ea8fe')+'33');
+  ctx.fillStyle.addColorStop?.(1,'transparent');
+  ctx.fill();
+}
+
+// ── Status polling ─────────────────────────────────────
+async function safeFetch(url){try{const r=await fetch(url);if(!r.ok)return null;return await r.json();}catch(e){return null;}}
+
+async function pollStatus(){
+  const [st,bl,ws,ins,per,prog,train,auto]=await Promise.all([
+    safeFetch(API+'/status'),safeFetch(API+'/beliefs'),
+    safeFetch(API+'/workspace'),safeFetch(API+'/insights'),
+    safeFetch(API+'/personality'),safeFetch(API+'/progress'),
+    safeFetch(API+'/training'),safeFetch(API+'/autonomous')
+  ]);
+  if(!st) return;
+
+  // Header status
+  document.getElementById('sdot').classList.toggle('live',!!st.ready);
+  document.getElementById('stext').textContent=st.ready?'live':'loading';
+
+  // Phi
+  const phi=st.dmn?.phi||ws?.phi_estimate||0;
+  document.getElementById('phi-v').textContent=phi.toFixed(4);
+  document.getElementById('phi-b').style.width=Math.min(100,phi*100)+'%';
+
+  // Beliefs
+  if(bl){
+    const qs=bl.questioning||[];
+    document.getElementById('blist').innerHTML=qs.length
+      ?qs.slice(0,4).map(b=>{const c=b.confidence;const col=c<.2?'var(--rd)':c<.4?'var(--am)':'var(--gr)';return`<div class="bitem"><div class="bdot" style="background:${col}"></div><span>${b.statement.substring(0,55)}… <span style="color:${col}">${c.toFixed(2)}</span></span></div>`;}).join('')
+      :'<div class="bitem">No beliefs under question</div>';
+  }
+
+  // Insights
+  if(ins){
+    const all=ins.insights||[];
+    document.getElementById('ilist').innerHTML=all.length
+      ?all.slice(-4).reverse().map(i=>`<div class="iitem">${i.substring(0,75)}…</div>`).join('')
+      :'<div class="iitem">Accumulating...</div>';
+  }
+
+  // State tab
+  const dmn=st.dmn||{};
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v||'—';};
+  set('ws-em',dmn.emotion||ws?.dominant_emotion);
+  set('ws-en',(dmn.engagement||ws?.engagement_level||0).toFixed?.(2));
+  set('ws-cy',dmn.cycles);set('ws-tr',dmn.trend);
+  set('ws-oq',(ws?.spontaneous_question||'').substring(0,60)+'...');
+  if(per){
+    document.getElementById('traits').innerHTML=(per.traits||[]).slice(0,5).map(t=>`<div class="trow"><div class="tbar" style="width:${Math.round(t.strength*58)}px"></div><span>${t.name.replace(/_/g,' ')}</span><span style="margin-left:auto;font-family:var(--mn);color:var(--ac);font-size:10px">${t.strength.toFixed(2)}</span></div>`).join('');
+  }
+  const ctot=st.collective?.total_contributions||0;
+  set('cn',ctot);document.getElementById('cb').style.width=Math.min(100,ctot/5)+'%';
+
+  // Progress tab
+  if(prog&&prog.snapshots&&prog.snapshots.length){
+    const snaps=prog.snapshots;
+    const latest=snaps[snaps.length-1];
+    const summary=prog.summary||{};
+    set('pr-verified',latest.verified_total||summary.verified_total||0);
+    set('pr-beliefs',latest.belief_count||0);
+    set('pr-q',latest.questioning_count||0);
+    set('pr-cycles',latest.dmn_cycles||0);
+    set('pr-hours',(summary.hours_running||0).toFixed(1)+'h');
+    // Phi sparkline
+    const phiVals=snaps.slice(-40).map(s=>s.phi||0);
+    requestAnimationFrame(()=>drawSparkline('phi-chart',phiVals,'#6ea8fe'));
+    // Domain depths
+    const depths=latest.domain_depths||{};
+    const depthColor={none:'var(--dm)',beginning:'var(--dm)',developing:'var(--am)',proficient:'var(--ac)',expert:'var(--gr)'};
+    document.getElementById('domains').innerHTML=Object.entries(depths).map(([d,depth])=>`<div class="wsrow"><span>${d}</span><span style="color:${depthColor[depth]||'var(--dm)'};font-family:var(--mn);font-size:10px">${depth}</span></div>`).join('');
+  }
+
+  // Training tab
+  if(train){
+    const stage=train.stage||'TRAINING';
+    document.getElementById('tr-stage').innerHTML=`<span class="stage ${stage}">${stage}</span>`;
+    set('tr-ex',train.examples||0);
+    set('tr-vr',train.last_test?((train.last_test.verify_rate*100).toFixed(1)+'%'):'—');
+    set('tr-be',train.backend||'—');
+    set('tr-saved',train.model_exists?'yes':'not yet');
+    if(train.history&&train.history.length){
+      const vrVals=train.history.map(h=>h.verify_rate||0);
+      requestAnimationFrame(()=>drawSparkline('vr-chart',vrVals,'#4ade80'));
+    }
+  }
+
+  // Autonomous tab
+  if(auto){
+    set('au-total',auto.total_asked||0);
+    set('au-verified',auto.total_verified||0);
+    set('au-last',(auto.last_question||'').substring(0,50)+'...');
+    set('au-status',auto.running?`running (every ${auto.interval_min}min)`:'not started');
+    if(auto.recent){
+      document.getElementById('au-log').innerHTML=auto.recent.slice().reverse().map(r=>`<div class="auto-item"><span class="${r.verified?'auto-v':'auto-u'}">${r.verified?'✓':'○'}</span> <span style="color:var(--dm);font-size:10px">[${r.source||'?'}]</span> ${r.question.substring(0,65)}…</div>`).join('');
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>
