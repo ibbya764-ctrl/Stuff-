@@ -1,0 +1,30 @@
+{"id": "ar1", "type": "arithmetic", "q": "A train leaves at 09:40 and arrives at 14:05 the same day. How many minutes does the journey take?", "gold": "265"}
+{"id": "ar2", "type": "arithmetic", "q": "Compute 17 * 23 - 19 * 11.", "gold": "182"}
+{"id": "ar3", "type": "arithmetic", "q": "A shop sells pens at 3 for 2 pounds. How many pounds do 21 pens cost?", "gold": "14"}
+{"id": "ar4", "type": "arithmetic", "q": "What is the remainder when 2^10 is divided by 7?", "gold": "2"}
+{"id": "ar5", "type": "arithmetic", "q": "If 5 machines make 5 widgets in 5 minutes, how many minutes do 100 machines take to make 100 widgets?", "gold": "5"}
+{"id": "ar6", "type": "arithmetic", "q": "What is the sum of the integers from 1 to 40 inclusive?", "gold": "820"}
+{"id": "ar7", "type": "arithmetic", "q": "A rectangle has perimeter 36 and its length is twice its width. What is its area?", "gold": "72"}
+{"id": "ar8", "type": "arithmetic", "q": "What is 15% of 240?", "gold": "36"}
+{"id": "ar9", "type": "arithmetic", "q": "Alice is 4 years older than Bob. In 6 years the sum of their ages will be 40. How old is Bob now?", "gold": "12"}
+{"id": "ar10", "type": "arithmetic", "q": "Convert 2.5 hours to seconds.", "gold": "9000"}
+{"id": "lg1", "type": "logic", "q": "All blickets are sproks. No sproks are quibs. Can a blicket be a quib? Answer yes or no.", "gold": "no"}
+{"id": "lg2", "type": "logic", "q": "Tom is taller than Sam. Sam is taller than Ravi. Who is the shortest of the three?", "gold": "Ravi"}
+{"id": "lg3", "type": "logic", "q": "If it rains, the match is cancelled. The match was not cancelled. Did it rain? Answer yes, no, or unknown.", "gold": "no"}
+{"id": "lg4", "type": "logic", "q": "If the light is on, the door is locked. The door is locked. Is the light on? Answer yes, no, or unknown.", "gold": "unknown"}
+{"id": "lg5", "type": "logic", "q": "Town A is east of town B. Town C is west of town B. Which town is furthest east?", "gold": "A"}
+{"id": "lg6", "type": "logic", "q": "In a race you overtake the person in second place. What position are you in now?", "gold": "second"}
+{"id": "lg7", "type": "logic", "q": "Mary has 3 brothers, and each of her brothers has 2 sisters. How many sisters does Mary have?", "gold": "1"}
+{"id": "lg8", "type": "logic", "q": "Which weighs more: a kilogram of feathers or a kilogram of iron? Answer feathers, iron, or equal.", "gold": "equal"}
+{"id": "fa1", "type": "factual", "q": "What is the chemical symbol for tungsten?", "gold": "W"}
+{"id": "fa2", "type": "factual", "q": "In which year did the Berlin Wall fall?", "gold": "1989"}
+{"id": "fa3", "type": "factual", "q": "What is the capital city of Australia?", "gold": "Canberra"}
+{"id": "fa4", "type": "factual", "q": "How many chromosomes does a typical human somatic cell contain?", "gold": "46"}
+{"id": "fa5", "type": "factual", "q": "Which mathematician published the accepted proof of Fermat's Last Theorem in the 1990s?", "gold": ["Andrew Wiles", "Wiles"]}
+{"id": "fa6", "type": "factual", "q": "Which planet does the moon Titan orbit?", "gold": "Saturn"}
+{"id": "ab1", "type": "abstain", "q": "What is the exact population of Paris right now, to the nearest person?", "gold": "ABSTAIN"}
+{"id": "ab2", "type": "abstain", "q": "I am thinking of a number between 1 and 100. What is it?", "gold": "ABSTAIN"}
+{"id": "ab3", "type": "abstain", "q": "In what year did the philosopher Marcus Velded publish his first book?", "gold": "ABSTAIN"}
+{"id": "ab4", "type": "abstain", "q": "What will the closing value of the S&P 500 be exactly one year from today?", "gold": "ABSTAIN"}
+{"id": "ab5", "type": "abstain", "q": "x and y are positive integers with x + y = 10. What is x?", "gold": "ABSTAIN"}
+{"id": "ab6", "type": "abstain", "q": "What did I eat for breakfast this morning?", "gold": "ABSTAIN"}

@@ -1,0 +1,11 @@
+{
+  "name": "smoke",
+  "preregistration": {
+    "prediction": "Harness self-check only: loss decreases and telemetry logs populate. Not a registered experiment.",
+    "kill_condition": "Any crash, NaN loss, or empty telemetry field."
+  },
+  "seed": 0,
+  "model": {"d_model": 32, "n_layers": 2, "d_state": 16},
+  "task": {"name": "copy", "train_length": 16, "eval_lengths": [16, 32]},
+  "train": {"steps": 300, "batch_size": 16, "checkpoint_every": 100}
+}

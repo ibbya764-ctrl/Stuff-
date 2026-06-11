@@ -1,0 +1,11 @@
+{
+  "name": "rung3_critical_line",
+  "preregistration": {
+    "prediction": "Tying all memory-mode decay widths to one trainable scalar per layer (the RH-shaped, maximally rigid spectrum; memory graded purely by frequency interference) matches or beats free widths on copy extrapolation at 2-4x train length at matched budget, because it prevents the width hierarchy from collapsing long-memory modes early in training.",
+    "kill_condition": "If free widths match or beat critical_line at matched budget on BOTH copy and selective_copy (3 seeds each), the width discipline is decoration: record as a first-class negative and drop. Either way this tests an inductive bias for memory, NOT anything about RH (firewall)."
+  },
+  "seed": 0,
+  "model": {"d_model": 128, "n_layers": 4, "d_state": 64, "width_mode": "critical_line", "freq_init": "s4"},
+  "task": {"name": "copy", "train_length": 64, "eval_lengths": [64, 128, 256]},
+  "train": {"steps": 4000, "batch_size": 32}
+}

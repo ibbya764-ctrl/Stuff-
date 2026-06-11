@@ -1,0 +1,11 @@
+{
+  "name": "rung2_gue_off",
+  "preregistration": {
+    "prediction": "Control arm for rung2_gue_on; identical in every respect except gue_reg_weight = 0.",
+    "kill_condition": "n/a (control)."
+  },
+  "seed": 0,
+  "model": {"d_model": 128, "n_layers": 4, "d_state": 64, "width_mode": "free", "freq_init": "s4"},
+  "task": {"name": "selective_copy", "train_length": 64, "eval_lengths": [64, 128, 256], "task_kw": {"n_keys": 8}},
+  "train": {"steps": 4000, "batch_size": 32, "gue_reg_weight": 0.0}
+}

@@ -1,0 +1,11 @@
+{
+  "name": "rung4_geometric",
+  "preregistration": {
+    "prediction": "Control arm for rung4_golden; identical except freq_init = geometric (RoPE-style ladder).",
+    "kill_condition": "n/a (control)."
+  },
+  "seed": 0,
+  "model": {"d_model": 128, "n_layers": 4, "d_state": 64, "width_mode": "free", "freq_init": "geometric"},
+  "task": {"name": "copy", "train_length": 64, "eval_lengths": [64, 128, 256]},
+  "train": {"steps": 4000, "batch_size": 32}
+}

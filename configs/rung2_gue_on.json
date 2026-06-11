@@ -1,0 +1,11 @@
+{
+  "name": "rung2_gue_on",
+  "preregistration": {
+    "prediction": "GUE log-repulsion on the dynamics frequencies raises the spacing ratio toward <r~> ~ 0.60 and improves selective-copy extrapolation accuracy at 4x train length vs rung2_gue_off at matched budget.",
+    "kill_condition": "If <r~> does not move toward 0.60 the regularizer is not working (mechanism gate fails). If <r~> moves but extrapolation accuracy at 256 does not beat rung2_gue_off by more than seed noise (3 seeds), GUE-reg is diagnostic-only: record and drop as a training aid."
+  },
+  "seed": 0,
+  "model": {"d_model": 128, "n_layers": 4, "d_state": 64, "width_mode": "free", "freq_init": "s4"},
+  "task": {"name": "selective_copy", "train_length": 64, "eval_lengths": [64, 128, 256], "task_kw": {"n_keys": 8}},
+  "train": {"steps": 4000, "batch_size": 32, "gue_reg_weight": 0.01}
+}

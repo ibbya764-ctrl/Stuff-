@@ -1,0 +1,11 @@
+{
+  "name": "rung4_golden",
+  "preregistration": {
+    "prediction": "A frequency ladder with adjacent ratios locked to phi (maximally badly-approximable, hence minimal systematic aliasing between memory modes) improves train-short/eval-long extrapolation on copy at 2-4x train length vs a tuned geometric ladder at matched budget.",
+    "kill_condition": "No extrapolation win over rung4_geometric on two tasks (3 seeds) => cosmetic; record and drop. If it WINS, the mandatory deflation control runs next: does any sufficiently irrational ratio (e.g. sqrt(2), e) do as well? Only a measurable phi-vs-other-irrational gap involves phi qua phi."
+  },
+  "seed": 0,
+  "model": {"d_model": 128, "n_layers": 4, "d_state": 64, "width_mode": "free", "freq_init": "golden"},
+  "task": {"name": "copy", "train_length": 64, "eval_lengths": [64, 128, 256]},
+  "train": {"steps": 4000, "batch_size": 32}
+}
