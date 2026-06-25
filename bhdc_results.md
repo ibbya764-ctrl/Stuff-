@@ -102,17 +102,68 @@ The standalone TMSV/Schmidt block (§7.1). `python3 test_entangled.py` — all g
 
 Default-off / standalone, per the paper — not yet wired into the combined model.
 
-## 5. Honest status / next actions
+## 5. GR geometry coupling (paper §4) — `bhdc_v1_1.py::GeometryCoupling`
 
-- **Built, validated, runnable:** coherent core + collapse arms + parallel scan +
-  telemetry (`bhdc_v1_1.py`), the grokking harness (`grok_bhdc.py`), the
-  matched-budget A/B (`ab_arms.py`), and the entangled §5 block
-  (`bhdc_entangled.py`). Two validation gates green (`test_bhdc.py`,
-  `test_entangled.py`).
-- **Needs GPU / matched budget:** ≥3-seed A/B to saturation and the full-step
-  p=97 grok; the §5 ablation `eigen` vs `generic` as a *trained* contrast (the
-  numerics are validated, the training comparison is not run).
-- **Not yet built:** the GR geometry coupling (§4) — `DilationSpine.modular_energy`
-  and the per-token density-coupled `scale` hook are stubbed for it; and the
-  **combined model** (§7.1, third file) wiring core + geometry + entanglement
-  behind per-component flags. Default-off until the core earns it, per the paper.
+Default-off behind `geometry_coupling`. Relocates GR equations as the *functional
+form* of an inductive bias (not a claim the net is spacetime), all knobs signed/
+learnable so the data can switch them off:
+
+- **density → dilation scale** (§4.2): `s_b → s_b·exp(−κ·ρ)`, ρ = collision
+  concentration of the state — finer zoom where information is dense.
+- **enriched density** (§4.4): ρ + γ·branch-disagreement (variance across
+  branches) — where scenarios diverge is where the collapse carries information.
+- **curvature → collapse temperature** (§4.3): τ = 1 + η·ρ, β = 1/τ, with the
+  Boltzmann weighting `c_b ∝ exp(−β·⟨h_b|K|h_b⟩)` in the spine's own modular
+  energy (the boost generator's expectation) — the GR and QM stages meeting at D.
+- **horizon gate** (§4.4): `w = 1 + g·(σ(k·(ρ−ρ_h)) − ½)` on the residual.
+
+Validated: with coupling on, all collapse modes forward and backprop with finite
+grads; density telemetry is live; the default-off path is byte-for-byte the
+prior behaviour (core tests unchanged).
+
+## 6. Combined model (paper §7.1, third file) — `bhdc_combined.py`
+
+The canonical training artifact: per layer `h ← CoherentBlock(h)` (collapse arms +
+optional §4 coupling) then optional `h ← h + EntangledBlock(h)` (§5 pathway),
+behind per-component flags. The entangled block's eigen ladder is tied **live**
+to that layer's spine spectrum — the operator literally in the wave function
+(§5.4). Emits the §8 telemetry and assertion gates (NaN loss/grad → hard stop;
+entanglement→product and router collapse → warnings).
+
+`python3 test_combined.py` — all green: every flag combo trains; flags toggle the
+right telemetry channels; the eigen ladder follows the live spine; gates fire on
+NaN / product-state / router collapse.
+
+### Combined all-on training (p=31, 600 steps, geometry + entanglement[eigen] on)
+
+| step | loss | train_acc | val_acc | collapse_ent | density | entangle_S | branch_load |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 150 | 2.75 | 0.069 | 0.000 | 1.33 | 0.259 | 1.384 | 0.216 |
+| 300 | 0.69 | 0.723 | 0.004 | 1.21 | 0.421 | 0.428 | 0.165 |
+| 450 | 0.43 | 0.927 | 0.035 | 1.31 | 0.415 | 0.438 | 0.204 |
+| 600 | 0.19 | 0.923 | 0.062 | 1.38 | 0.385 | 0.409 | 0.220 |
+
+**[PROPOSED → on-thesis]** The combined model trains stably end-to-end with every
+component on. **Entanglement entropy settles at a stable nonzero ≈ 0.41** (well
+above the 0.05 product-state floor) — it does **not** collapse to a product state
+under gradient pressure, exactly the paper's "middle" prediction (§11, "the
+entanglement entropy settles at a stable nonzero value correlated with task
+structure"). Density and collapse-entropy channels stay live; branch load stays
+balanced (no router collapse); **no assertion gate fired.** One seed, onset not
+full grok — same honest caveats as §3.
+
+## 7. Honest status / next actions
+
+- **Built, validated, runnable on CPU:** coherent core + collapse arms + parallel
+  scan + GR geometry coupling + telemetry (`bhdc_v1_1.py`); the entangled §5 block
+  (`bhdc_entangled.py`); the combined model + §8 gates (`bhdc_combined.py`); the
+  grokking harness (`grok_bhdc.py`); the matched-budget A/B (`ab_arms.py`); the
+  combined demo (`combined_demo.py`). **Three validation gates green**
+  (`test_bhdc.py`, `test_entangled.py`, `test_combined.py`).
+- **Needs GPU / matched budget:** ≥3-seed runs to saturation; the full-step p=97
+  grok; trained leave-one-out attribution across core / +geometry / +entanglement
+  / all-on (the harness is ready — `bhdc_combined.py` flags + telemetry); the §5
+  `eigen` vs `generic` trained contrast; the ~100M run (§9), sized d_model≈720 /
+  ~14 layers.
+- **Deferred by the paper:** hyperbolic/squeeze geometries (v2, firewall
+  question); exp-of-squeezing entanglement (v2, needs a Gaussian-optics sim).

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BHDC v1.1 — Implementation & First Empirical Read</title>
+<style>
+  :root{--ink:#1a1c20;--mut:#5b6470;--line:#e3e6ea;--accent:#3b5bdb;--good:#2b8a3e;--warn:#b08900;--bg:#fff;--code:#f5f7f9;}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--ink);max-width:860px;margin:0 auto;padding:48px 28px 80px;line-height:1.55;background:var(--bg);}
+  h1{font-size:30px;margin:0 0 4px;letter-spacing:-.4px}
+  h2{font-size:21px;margin:38px 0 10px;padding-top:14px;border-top:2px solid var(--line);letter-spacing:-.2px}
+  h3{font-size:16px;margin:22px 0 6px;color:var(--ink)}
+  p,li{font-size:15px}
+  .sub{color:var(--mut);font-size:15px;margin:0 0 6px}
+  .meta{color:var(--mut);font-size:13px;margin-bottom:18px}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px;
+       font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+  pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow-x:auto;font-size:12.5px;
+      font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;line-height:1.45}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left}
+  th{background:#f0f3f7;font-weight:600}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:5px;vertical-align:middle}
+  .pass{background:#e6f4ea;color:var(--good)}
+  .prop{background:#fff4d6;color:var(--warn)}
+  .key{background:#eef2ff;color:var(--accent)}
+  .card{background:#f8fafc;border:1px solid var(--line);border-left:4px solid var(--accent);
+        padding:12px 16px;border-radius:6px;margin:14px 0}
+  .good{color:var(--good);font-weight:600}
+  .mut{color:var(--mut)}
+  ul{padding-left:22px}
+  .foot{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;color:var(--mut);font-size:12.5px}
+  @media print{body{padding:0 8px}h2{border-top:1px solid #ccc}a{color:inherit;text-decoration:none}}
+</style>
+</head>
+<body>
+
+<h1>BHDC v1.1 — Implementation &amp; First Empirical Read</h1>
+<p class="sub">Branching Hamiltonian Dilation Collapse: the corrected coherent core, the GR
+geometry coupling, the entangled two-sector state, and the combined model — built, validated, and run.</p>
+<p class="meta">CP² AI program · prepared 25 June 2026 · runs on CPU (<code>torch 2.12.1</code>);
+full-scale / multi-seed runs reserved for the workstation GPU. Branch
+<code>claude/bhdc-v1-1-implementation-4bklfy</code>, PR #1.</p>
+
+<div class="card">
+<strong>One-line status.</strong> The whole architecture from the working paper is implemented behind
+per-component flags and passes three validation gates. The first empirical reads are <em>on-thesis</em>:
+at matched budget the <strong>coherent (interfering) collapse is the only collapse arm that generalizes
+above chance</strong>, and the combined all-on model trains stably with the <strong>entanglement entropy
+settling at a stable nonzero value</strong> rather than collapsing. These are single-seed onset signals,
+not finished groks — honest caveats throughout.
+</div>
+
+<h2>1 · What was built</h2>
+<table>
+<tr><th>File</th><th>What</th><th>Paper §</th></tr>
+<tr><td><code>bhdc_v1_1.py</code></td><td>Coherent core: encode → scenarios over scale×geometry on the <em>one</em> shared dilation spine → coherent superposition Ψ=Σ<sub>b</sub> c<sub>b</sub> h<sub>b</sub> → terminal |CΨ|² → GLU → residual. Collapse arms + GR geometry coupling, all flags. Hillis–Steele parallel scan.</td><td>3, 4, 7.2</td></tr>
+<tr><td><code>bhdc_entangled.py</code></td><td>Standalone TMSV/Schmidt entangled block: M = U<sub>A</sub>·diag(s(r))·U<sub>B</sub><sup>†</sup>, SVD-free, ‖M‖<sub>F</sub>=1; operator-eigenbasis + generic-ladder ablation; entanglement entropy out.</td><td>5</td></tr>
+<tr><td><code>bhdc_combined.py</code></td><td>Combined model: core + geometry + entanglement per-component flags; eigen ladder tied live to the spine; §8 telemetry + assertion gates.</td><td>7.1, 8</td></tr>
+<tr><td><code>grok_bhdc.py</code></td><td>Pre-registered modular-addition grokking read (prediction + kill condition).</td><td>9</td></tr>
+<tr><td><code>ab_arms.py</code></td><td>Matched-budget A/B over the collapse arms.</td><td>3.5, 8</td></tr>
+<tr><td><code>combined_demo.py</code></td><td>End-to-end combined training watching the telemetry channels.</td><td>8, 9</td></tr>
+<tr><td><code>test_bhdc.py · test_entangled.py · test_combined.py</code></td><td>Three validation gates.</td><td>9.1</td></tr>
+</table>
+
+<h2>2 · Validation gates <span class="tag pass">ALL GREEN</span></h2>
+<p>The paper's step-1 bug-gate (§9.1) — run before any large commit.</p>
+<h3>Core (<code>test_bhdc.py</code>)</h3>
+<ul>
+<li><strong>Parallel scan == sequential</strong> to machine tolerance: max|err| ≤ 5e-7 for T ∈ {1,2,8,17,64}. The O(T·logT) Hillis–Steele scan is validated against the O(T) reference before use (§7.2).</li>
+<li><strong>Geometry bank unitary</strong> (Identity / Torus / SU(2)-block / Mesh) to ≤5e-7 — the coherent sum is well defined (§3.4).</li>
+<li>Encoder unit-norm; <strong>branch 0 pinned</strong> to the identity scenario (scale=1, phase reference); all 8 collapse×nonlin flag combos forward + backprop with finite grads.</li>
+</ul>
+<h3>Entanglement (<code>test_entangled.py</code>)</h3>
+<ul>
+<li><strong>‖M‖<sub>F</sub> = 1</strong> at every r — bounded by construction, no SVD, no norm blow-up (§5.3).</li>
+<li><strong>r = 0 → product state</strong> (S &lt; 0.1% of max); <strong>r large → entangled</strong> (S → log K); entropy monotone in r.</li>
+<li>U<sub>A</sub>, U<sub>B</sub> unitary; reduced-state eigenvalues == Schmidt occupations; finite grads in both bases.</li>
+</ul>
+<h3>Combined (<code>test_combined.py</code>)</h3>
+<ul>
+<li>Every flag combination trains; flags toggle the right telemetry channels; the <strong>eigen entangled ladder follows the live spine spectrum</strong> (the operator literally in the wave function, §5.4); gates fire on NaN loss/grad, product-state entanglement, and router collapse.</li>
+</ul>
+
+<h2>3 · Matched-budget A/B — the decisive isolation <span class="tag key">KEY RESULT</span></h2>
+<p>The four collapse arms at <strong>identical</strong> p / split / steps / width / seed. Parameters are identical
+across arms (every branch, gate, and phase head is always built; the flag only changes the forward
+contraction), so the budget is matched by construction. p = 31, 1500 steps, AdamW lr 5e-3 wd 0.5, seed 0,
+chance = 0.032.</p>
+<table>
+<tr><th>Collapse arm</th><th class="n">best val acc</th><th>note</th></tr>
+<tr><td>single (baseline)</td><td class="n">0.000</td><td class="mut">one scenario, no superposition</td></tr>
+<tr><td>incoherent mixture</td><td class="n">0.000</td><td class="mut">ρ̄ = Σ p<sub>b</sub>ρ<sub>b</sub>, decohered</td></tr>
+<tr><td><strong>coherent (primary)</strong></td><td class="n"><strong class="good">0.064</strong></td><td>Ψ = Σ c<sub>b</sub>h<sub>b</sub>, |CΨ|²</td></tr>
+<tr><td>coherent-complex</td><td class="n">0.054</td><td class="mut">relative-phase interference</td></tr>
+</table>
+<p><strong>Only the coherent arm generalizes above chance.</strong> Single-scenario and the incoherent mixture
+both sit at val 0.0. This isolates the architecture's central claim (§3.3): it is the <strong>inter-branch
+coherence</strong> — the interference terms a softmax gate or a decohered mixture cannot reproduce — that
+carries the signal, not multi-scenario averaging. <code>coherent &gt; coherent-complex</code> matches the
+paper's note that complex amplitudes train twitchier. <span class="tag prop">PROPOSED</span>
+<span class="mut">Caveats: n=1 seed; train not yet saturated → onset, not a completed grok. Decisive
+attribution wants ≥3 seeds + saturation (the GPU run).</span></p>
+
+<h2>4 · Combined model, all components on</h2>
+<p>p = 31, 600 steps, coherent collapse + GR geometry coupling + entanglement (eigen, K=8), one seed.
+Watching the §8 telemetry; no assertion gate fired.</p>
+<table>
+<tr><th class="n">step</th><th class="n">loss</th><th class="n">train</th><th class="n">val</th><th class="n">collapse&nbsp;S</th><th class="n">density</th><th class="n">entangle&nbsp;S</th><th class="n">load</th></tr>
+<tr><td class="n">150</td><td class="n">2.75</td><td class="n">0.069</td><td class="n">0.000</td><td class="n">1.33</td><td class="n">0.259</td><td class="n">1.384</td><td class="n">0.216</td></tr>
+<tr><td class="n">300</td><td class="n">0.69</td><td class="n">0.723</td><td class="n">0.004</td><td class="n">1.21</td><td class="n">0.421</td><td class="n">0.428</td><td class="n">0.165</td></tr>
+<tr><td class="n">450</td><td class="n">0.43</td><td class="n">0.927</td><td class="n">0.035</td><td class="n">1.31</td><td class="n">0.415</td><td class="n">0.438</td><td class="n">0.204</td></tr>
+<tr><td class="n">600</td><td class="n">0.19</td><td class="n">0.923</td><td class="n">0.062</td><td class="n">1.38</td><td class="n">0.385</td><td class="n">0.409</td><td class="n">0.220</td></tr>
+</table>
+<p>The combined model <strong>trains stably end-to-end</strong>. The <strong>entanglement entropy settles at a
+stable nonzero ≈ 0.41</strong> (well above the 0.05 product-state floor) — it does <em>not</em> decay to a
+product state under gradient pressure, which is precisely the paper's "middle" prediction (§11: <em>"the
+entanglement entropy settles at a stable nonzero value correlated with task structure"</em>). Density and
+collapse-entropy channels stay live; branch load stays balanced (no router collapse). <span class="tag prop">PROPOSED</span></p>
+
+<h2>5 · Corrections carried from v1.0</h2>
+<ul>
+<li><strong>Collapse last.</strong> Phase is carried through the spine and geometry; the single Born-rule |·|² happens once at the end of the block (v1.0 squared early and stripped the phase the spine exists to use).</li>
+<li><strong>One operator, not a bank.</strong> Branches differ only by a scalar zoom s<sub>b</sub> and a unitary geometry g<sub>b</sub> — the same spine seen many ways — replacing v1.0's per-branch GUE-perturbed Hamiltonians.</li>
+<li><strong>Coherent, not incoherent, collapse</strong> (§3 above), now empirically the load-bearing piece.</li>
+<li>Two implementation bugs fixed during this build: the spine scan's phantom time-axis indexing, and the encoder normalizing only the real part.</li>
+</ul>
+
+<h2>6 · Honest status &amp; next actions</h2>
+<p><strong>Done, validated, runnable on CPU:</strong> coherent core + collapse arms + parallel scan + GR
+geometry coupling + telemetry; the entangled §5 block; the combined model + §8 gates; the grokking
+harness; the matched-budget A/B; the combined demo. Three validation gates green.</p>
+<p><strong>Needs GPU / matched budget (harness is ready — only compute is missing):</strong></p>
+<ul>
+<li>≥3-seed runs to <strong>saturation</strong>, and the full-step <strong>p = 97 grok</strong>.</li>
+<li><strong>Trained leave-one-out attribution</strong> across core / +geometry / +entanglement / all-on — the flags + telemetry exist for exactly this.</li>
+<li>The §5 <strong>eigen vs generic</strong> entanglement-basis trained contrast (numerics validated, training comparison not run).</li>
+<li>The <strong>~100M run</strong> (§9), sized d_model ≈ 720 / ~14 layers.</li>
+</ul>
+<p><strong>Deferred by the paper:</strong> hyperbolic/squeeze geometries (v2 — firewall question of whether
+negative-curvature branches interfere); exp-of-squeezing entanglement (v2 — needs a Gaussian-optics
+simulator). <strong>Firewall held throughout:</strong> GR/QM structure is used only as the functional form of
+inductive biases, never as a physical claim; nothing here touches the Riemann hypothesis.</p>
+
+<h2>7 · How to reproduce</h2>
+<pre>pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+python3 test_bhdc.py        # core validation gate
+python3 test_entangled.py   # entanglement numerics gate
+python3 test_combined.py    # combined model + assertion gates
+
+python3 ab_arms.py --steps 1500            # matched-budget collapse-arm A/B
+python3 grok_bhdc.py --p 97 --steps 30000  # full grokking read (GPU)
+python3 combined_demo.py --steps 600       # combined all-on, telemetry watch</pre>
+
+<p class="foot">CP² AI program · BHDC v1.1 · empirical column opened (was blank). All capability statements remain
+speculative and tagged; negatives are first-class; pre-registration and matched-budget discipline observed.
+Generated alongside the codebase on branch <code>claude/bhdc-v1-1-implementation-4bklfy</code>.</p>
+
+</body>
+</html>

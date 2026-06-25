@@ -243,15 +243,59 @@ COLLAPSE_MODES = ("single", "incoherent", "coherent", "coherent-complex")
 COLLAPSE_NONLIN = ("abs2", "gelu")
 
 
+class GeometryCoupling(nn.Module):
+    """GR / black-hole-inspired inductive bias (paper section 4), default-off.
+
+    Relocates GR equations as the *functional form* of a bias (not a claim the
+    net is spacetime). Pieces, all signed/learnable so the data can switch them
+    off:
+      * density -> dilation scale:   s_b -> s_b * exp(-kappa * rho)   (4.2)
+      * enriched density:            rho_en = rho + gamma * branch_disagreement (4.4)
+      * curvature -> collapse temp:  tau = 1 + eta * rho_en ;  beta = 1/tau   (4.3)
+        with Boltzmann weighting  c_b ∝ exp(-beta * <h_b|K|h_b>) in the spine's
+        own modular energy (the boost generator's expectation)               (4.3)
+      * horizon gate:                w = 1 + g*(sigma(k*(rho - rho_h)) - 1/2)  (4.4)
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.kappa = nn.Parameter(torch.zeros(1))      # signed; 0 -> neutral scale
+        self.gamma = nn.Parameter(torch.zeros(1))      # branch-disagreement weight
+        self.eta = nn.Parameter(torch.zeros(1))        # curvature -> temperature
+        self.log_k = nn.Parameter(torch.zeros(1))      # horizon sharpness
+        self.rho_h = nn.Parameter(torch.tensor(0.5))   # horizon threshold
+        self.h_gain = nn.Parameter(torch.zeros(1))     # 0 -> horizon gate neutral
+
+    def scale_mod(self, s_b, rho):
+        """s_b * exp(-kappa * rho) -> per-token (B, T, 1)."""
+        return (s_b * torch.exp(-self.kappa * rho)).unsqueeze(-1)
+
+    def enriched(self, rho, H):
+        """rho + gamma * branch disagreement (variance across branches)."""
+        bvar = H.real.var(dim=0, unbiased=False).mean(dim=-1)   # (B, T)
+        return rho + F.softplus(self.gamma) * bvar
+
+    def beta(self, rho_en):
+        tau = (1.0 + self.eta * rho_en).clamp_min(0.1)
+        return 1.0 / tau                                         # (B, T)
+
+    def horizon_weight(self, rho):
+        k = F.softplus(self.log_k)
+        w = torch.sigmoid(k * (rho - self.rho_h)) - 0.5
+        return (1.0 + self.h_gain * w).unsqueeze(-1)             # (B, T, 1)
+
+
 class CoherentBlock(nn.Module):
     """encode -> scenarios over scale x geometry -> collapse -> GLU -> residual.
 
     All mechanisms are flags so a single combined run yields leave-one-out
-    attribution (paper section 7.4 / 8).
+    attribution (paper section 7.4 / 8). The GR geometry coupling (section 4) is
+    default-off behind `geometry_coupling`.
     """
 
     def __init__(self, d_model, n_branches=4, collapse="coherent",
-                 collapse_nonlin="abs2", expansion=2, parallel=True):
+                 collapse_nonlin="abs2", expansion=2, parallel=True,
+                 geometry_coupling=False):
         super().__init__()
         assert collapse in COLLAPSE_MODES, collapse
         assert collapse_nonlin in COLLAPSE_NONLIN, collapse_nonlin
@@ -261,6 +305,7 @@ class CoherentBlock(nn.Module):
         self.collapse = collapse
         self.collapse_nonlin = collapse_nonlin
         self.parallel = parallel
+        self.geometry_coupling = geometry_coupling
 
         self.encoder = ComplexEncoder(d_model, d_model)
         self.spine = DilationSpine(d_model)
@@ -276,6 +321,7 @@ class CoherentBlock(nn.Module):
         self.gate = nn.Linear(d_model, n_branches)
         # relative phases for the complex-amplitude arm (branch 0 pinned to 0).
         self.phase_gate = nn.Linear(d_model, n_branches)
+        self.gc = GeometryCoupling() if geometry_coupling else None
 
         self.glu = GLUMix(d_model, expansion)
         self.out_norm = nn.LayerNorm(d_model)
@@ -286,66 +332,78 @@ class CoherentBlock(nn.Module):
             ls = torch.cat([ls[:1] * 0.0, ls[1:]])
         return torch.exp(ls)  # branch 0 -> 1.0
 
+    def _branch_scale(self, b, scales, rho):
+        if self.gc is None:
+            return scales[b]
+        return self.gc.scale_mod(scales[b], rho)            # per-token (B, T, 1)
+
     def forward(self, x, return_telemetry=False):
         M_full = x.shape[:-1]
         x_flat = x.reshape(-1, x.shape[-2], x.shape[-1]) if x.dim() > 3 else x
         B, T, d = x_flat.shape
         psi = self.encoder(x_flat)                       # (B, T, d) complex, unit norm
         scales = self.scales()
-
-        scores = self.gate(x_flat)                       # (B, T, n_branches), real
-        p = torch.softmax(scores, dim=-1)
         n = self.n_branches
+        rho = collision_density(psi) if self.gc is not None else None   # (B, T)
+
+        scores = self.gate(x_flat)                       # (B, T, n), real
 
         if self.collapse == "single":
-            h = self.geoms[0](self.spine.scan(psi, scales[0], self.parallel))
-            Cpsi = self.spine.readout(h)
-            y = self._nonlin(Cpsi)
-            tele = self._telemetry(p, None)
-        elif self.collapse == "incoherent":
-            ys, ent_acc = 0.0, []
-            for b in range(n):
-                h = self.geoms[b](self.spine.scan(psi, scales[b], self.parallel))
-                Cpsi = self.spine.readout(h)
-                ys = ys + p[..., b:b + 1] * self._nonlin(Cpsi)
-                ent_acc.append(h)
-            y = ys
-            tele = self._telemetry(p, torch.stack(ent_acc, dim=0))
-        else:  # coherent / coherent-complex
-            amp = torch.sqrt(p + 1e-9)                   # (B, T, n)
-            if self.collapse == "coherent-complex":
-                theta = self.phase_gate(x_flat)
-                theta = theta - theta[..., :1]           # branch 0 phase reference
-                c = amp * torch.exp(1j * theta)          # complex amplitudes
-            else:
-                c = amp.to(torch.cfloat)                 # real nonnegative amplitudes
-            Psi, hs = 0.0, []
-            for b in range(n):
-                h = self.geoms[b](self.spine.scan(psi, scales[b], self.parallel))
-                Psi = Psi + c[..., b:b + 1] * h
-                hs.append(h)
-            Cpsi = self.spine.readout(Psi)               # |C Psi|^2: collapse once
-            y = self._nonlin(Cpsi)
-            tele = self._telemetry(p, torch.stack(hs, dim=0))
+            h = self.geoms[0](self.spine.scan(psi, self._branch_scale(0, scales, rho), self.parallel))
+            y = self._nonlin(self.spine.readout(h))
+            p = torch.softmax(scores, dim=-1)
+            extra = None
+        else:
+            hs = [self.geoms[b](self.spine.scan(psi, self._branch_scale(b, scales, rho), self.parallel))
+                  for b in range(n)]
+            H = torch.stack(hs, dim=0)                    # (n, B, T, d)
 
-        out = self.out_norm(x_flat + self.glu(y))
+            logits = scores
+            if self.gc is not None:
+                # curvature-set collapse temperature: c_b ∝ exp(-beta <h_b|K|h_b>)
+                E = self.spine.modular_energy(H).permute(1, 2, 0)        # (B, T, n)
+                beta = self.gc.beta(self.gc.enriched(rho, H)).unsqueeze(-1)
+                logits = logits - beta * E
+            p = torch.softmax(logits, dim=-1)
+
+            if self.collapse == "incoherent":
+                y = sum(p[..., b:b + 1] * self._nonlin(self.spine.readout(hs[b])) for b in range(n))
+            else:  # coherent / coherent-complex
+                amp = torch.sqrt(p + 1e-9)
+                if self.collapse == "coherent-complex":
+                    theta = self.phase_gate(x_flat)
+                    theta = theta - theta[..., :1]       # branch 0 phase reference
+                    c = amp * torch.exp(1j * theta)
+                else:
+                    c = amp.to(torch.cfloat)             # real nonnegative amplitudes
+                Psi = sum(c[..., b:b + 1] * hs[b] for b in range(n))
+                y = self._nonlin(self.spine.readout(Psi))   # |C Psi|^2: collapse once
+            extra = H
+
+        feat = self.glu(y)
+        if self.gc is not None:
+            feat = self.gc.horizon_weight(rho) * feat    # horizon gate on the residual
+        out = self.out_norm(x_flat + feat)
         if x.dim() > 3:
             out = out.reshape(*M_full, T, d)
-        return (out, tele) if return_telemetry else out
+        if not return_telemetry:
+            return out
+        return out, self._telemetry(p, extra, rho)
 
     def _nonlin(self, Cpsi):
         if self.collapse_nonlin == "abs2":
             return (Cpsi.conj() * Cpsi).real
         return F.gelu(Cpsi.real)
 
-    def _telemetry(self, p, hs):
+    def _telemetry(self, p, hs, rho):
         with torch.no_grad():
             ent = -(p.clamp_min(1e-9) * p.clamp_min(1e-9).log()).sum(-1).mean()
             load = p.mean(dim=tuple(range(p.dim() - 1))).min()
             tele = {"collapse_entropy": ent.item(), "branch_load": load.item()}
             if hs is not None:
-                # branch-disagreement proxy (enriched-density / coherence channel)
                 tele["branch_var"] = hs.real.var(dim=0).mean().item()
+            if rho is not None:
+                tele["density_mean"] = rho.mean().item()
         return tele
 
 
@@ -360,6 +418,7 @@ class BHDCConfig:
     collapse_nonlin: str = "abs2"
     expansion: int = 2
     parallel: bool = True
+    geometry_coupling: bool = False
     tie_readout: bool = False
 
 
@@ -374,7 +433,8 @@ class BHDCModel(nn.Module):
         self.pos = nn.Parameter(torch.randn(cfg.max_len, cfg.d_model) * 0.02)
         self.blocks = nn.ModuleList([
             CoherentBlock(cfg.d_model, cfg.n_branches, cfg.collapse,
-                          cfg.collapse_nonlin, cfg.expansion, cfg.parallel)
+                          cfg.collapse_nonlin, cfg.expansion, cfg.parallel,
+                          cfg.geometry_coupling)
             for _ in range(cfg.n_layers)
         ])
         self.head = nn.Linear(cfg.d_model, cfg.vocab_size)
@@ -414,6 +474,16 @@ def _selftest():
             print(f"[block] collapse={mode:17s} nl={nl:4s} out={tuple(out.shape)} "
                   f"grad_norm={gnorm:.3f} entropy={tele['collapse_entropy']:.3f} "
                   f"load={tele['branch_load']:.3f} -> {'OK' if ok else 'FAIL'}")
+
+    # GR geometry coupling (section 4), default-off -> on
+    for mode in ("coherent", "incoherent", "single"):
+        blk = CoherentBlock(d, n_branches=4, collapse=mode, geometry_coupling=True)
+        out, tele = blk(x, return_telemetry=True)
+        out.square().mean().backward()
+        gnorm = torch.sqrt(sum(p.grad.square().sum() for p in blk.parameters() if p.grad is not None))
+        ok = torch.isfinite(out).all() and torch.isfinite(gnorm)
+        print(f"[gr-coupling] collapse={mode:11s} grad_norm={gnorm:.3f} "
+              f"density={tele.get('density_mean', float('nan')):.3f} -> {'OK' if ok else 'FAIL'}")
 
     cfg = BHDCConfig(vocab_size=97, d_model=64, n_layers=2, n_branches=4, max_len=4)
     model = BHDCModel(cfg)

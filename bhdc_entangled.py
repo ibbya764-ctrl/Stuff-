@@ -68,11 +68,20 @@ class EntangledBlock(nn.Module):
         else:
             self.ext_omega = None
             self.log_omega = nn.Parameter(torch.linspace(-2.0, 2.0, k))
+        self._omega_fn = None                          # live tie to a core spine
 
         self.out_proj = nn.Linear(2 * k, d_model)
         self.out_norm = nn.LayerNorm(d_model)
 
+    def set_omega_source(self, fn):
+        """Tie the eigen ladder to a live spine: fn() returns its omega spectrum.
+        This is the faithful 'same core spine's eigenvalues passed in' (section 5.4)
+        -- the operator is not generating the entanglement from outside."""
+        self._omega_fn = fn
+
     def omega(self):
+        if self._omega_fn is not None:
+            return self._omega_fn()[: self.k]          # already a positive spectrum
         if self.ext_omega is not None:
             return F.softplus(self.ext_omega)
         return F.softplus(self.log_omega)
