@@ -53,16 +53,66 @@ its pre-registered "signal present" gate. **[PROPOSED → early signal]** — th
 onset, *not* a completed grok; whether it generalizes fully is unresolved at this
 budget and is the GPU run's job.
 
-## 3. Honest status / next actions
+## 3. Matched-budget A/B attribution (paper §3.5 / §8) — `ab_arms.py`
 
-- The coherent core, collapse arms, parallel scan, telemetry, and the grokking
-  harness are implemented, validated, and runnable.
-- **Not yet done (needs GPU / matched budget):** the baseline A/B that makes any
-  win *attributable* — `--collapse single` vs `coherent` vs `incoherent` vs
-  `coherent-complex` at identical p / split / steps / width — and the full-step
-  p=97 grok. The arms are wired; only compute is missing.
-- The GR geometry coupling (§4) and the entangled two-sector state (§5) are
-  **not yet built** — `DilationSpine.modular_energy` and the per-token
-  density-coupled `scale` hook are stubbed in for them, but the coupling and the
-  TMSV/Schmidt block remain to do. Default-off until the core proves itself,
-  per the paper.
+The decisive isolation: the four collapse arms at **identical** p / split / steps
+/ width / seed (params are identical across arms — the flag only changes the
+forward contraction). p=31, 1500 steps, AdamW lr 5e-3 wd 0.5, seed 0.
+
+| arm | best_val_acc | train_saturated |
+|---|---:|:--:|
+| single (baseline) | 0.0000 | False |
+| incoherent mixture | 0.0000 | False |
+| **coherent (real, primary)** | **0.0644** | False |
+| coherent-complex | 0.0541 | False |
+
+`coherent − single = +0.064` (chance = 0.032).
+
+**Reading [PROPOSED → on-thesis early signal]:** at matched budget, the coherent
+arm is the *only* one that generalizes above chance; single-scenario and the
+incoherent mixture both sit at val 0.0. That isolates the architecture's central
+claim — it is the **inter-branch coherence** (the interference terms a softmax/
+mixture cannot reproduce, §3.3), not multi-scenario averaging, that carries the
+signal. coherent > coherent-complex is consistent with the paper's note that
+complex amplitudes train twitchier (§3.3).
+
+**Honest limits:** n = 1 seed; train not saturated at 1500 steps, so this is
+*onset*, not a completed grok — single/incoherent could still generalize with a
+longer budget. Decisive attribution wants ≥3 seeds and saturation (the
+workstation/GPU run). The mechanism for cheap attribution is in place; only
+compute is missing.
+
+## 4. Entangled two-sector block (paper §5) — `bhdc_entangled.py`
+
+The standalone TMSV/Schmidt block (§7.1). `python3 test_entangled.py` — all green:
+
+- **Bounded by construction** (§5.3): `‖M‖_F = 1` for the Schmidt state
+  `M = U_A diag(s(r)) U_B†` at every r — no SVD, no norm blow-up.
+- **r = 0 → product state** (S < 0.1% of max), **r large → entangled** (S → log K);
+  entanglement entropy monotone in r. The entangling knob behaves as the paper's
+  squeezing strength.
+- **Operator-in-the-wave-function** (§5.4): in the `eigen` basis the Schmidt
+  ladder spacing IS the dilation operator's spectrum ω_n, so the operator's own
+  eigenvalues set the Schmidt weights; the `generic` (uniform-ladder) basis is
+  kept as the ablation contrast.
+- `U_A, U_B` unitary (matrix-exp of an anti-Hermitian generator, computed once
+  per forward); reduced-state eigenvalues == Schmidt occupations; finite grads
+  in both bases. Entanglement entropy is emitted as telemetry (product-state
+  floor = the §8 warning gate).
+
+Default-off / standalone, per the paper — not yet wired into the combined model.
+
+## 5. Honest status / next actions
+
+- **Built, validated, runnable:** coherent core + collapse arms + parallel scan +
+  telemetry (`bhdc_v1_1.py`), the grokking harness (`grok_bhdc.py`), the
+  matched-budget A/B (`ab_arms.py`), and the entangled §5 block
+  (`bhdc_entangled.py`). Two validation gates green (`test_bhdc.py`,
+  `test_entangled.py`).
+- **Needs GPU / matched budget:** ≥3-seed A/B to saturation and the full-step
+  p=97 grok; the §5 ablation `eigen` vs `generic` as a *trained* contrast (the
+  numerics are validated, the training comparison is not run).
+- **Not yet built:** the GR geometry coupling (§4) — `DilationSpine.modular_energy`
+  and the per-token density-coupled `scale` hook are stubbed for it; and the
+  **combined model** (§7.1, third file) wiring core + geometry + entanglement
+  behind per-component flags. Default-off until the core earns it, per the paper.
