@@ -18,6 +18,12 @@ validatable on CPU, numpy-only, without the GPU / Groq / Scaffold substrate:
                       arms with Var(s) and the level-spacing <r~> statistic
                       (reusing spectral_telemetry), and reports SUPPORT /
                       FALSIFY against the note's 5.6 falsification block.
+  * model/         -- the FULL composed architecture (note 0-5.10) wired into
+                      one CP2Model forward pass. [STRUCTURE COMPLETE -- NOT
+                      TRAINED, NOT VALIDATED.] Real CPU mechanisms where
+                      expressible; substrate-gated stand-ins (trained spectrum,
+                      encoder/readout, and 3's coherence claim) where the
+                      GPU/Groq/Scaffold substrate is required. See model/README.
 
 Discipline carried in from CLAUDE.md and the note:
   * Two-problem firewall: nothing here claims an ML result evidences the
@@ -31,4 +37,4 @@ Discipline carried in from CLAUDE.md and the note:
     silently dropped.
 """
 
-__all__ = ["anti_collapse", "scale_dynamics", "eval_force_law"]
+__all__ = ["anti_collapse", "scale_dynamics", "eval_force_law", "model"]
