@@ -20,6 +20,20 @@ from bhdc_v1_1 import CoherentBlock, COLLAPSE_MODES
 from bhdc_entangled import EntangledBlock
 
 
+class CapacityPad(nn.Module):
+    """A generic residual MLP whose only purpose is to match parameter budget in a
+    control arm (so a +entanglement vs core comparison isolates the entangling
+    *structure*, not the extra parameters -- the program's matched-budget rule)."""
+
+    def __init__(self, d_model, hidden):
+        super().__init__()
+        self.fc1 = nn.Linear(d_model, hidden)
+        self.fc2 = nn.Linear(hidden, d_model)
+
+    def forward(self, x):
+        return x + self.fc2(nn.functional.gelu(self.fc1(x)))
+
+
 @dataclass
 class CombinedConfig:
     vocab_size: int = 97
@@ -36,6 +50,7 @@ class CombinedConfig:
     use_entanglement: bool = False
     entangle_k: int = 8
     entangle_basis: str = "eigen"          # 'eigen' (operator) | 'generic' (ablation)
+    capacity_pad: int = 0                  # >0: per-layer control MLP (budget match only)
 
 
 class CombinedBHDC(nn.Module):
@@ -48,6 +63,7 @@ class CombinedBHDC(nn.Module):
 
         self.cores = nn.ModuleList()
         self.ents = nn.ModuleList()
+        self.pads = nn.ModuleList()
         for _ in range(cfg.n_layers):
             core = CoherentBlock(cfg.d_model, cfg.n_branches, cfg.collapse,
                                  cfg.collapse_nonlin, cfg.expansion, cfg.parallel,
@@ -60,13 +76,14 @@ class CombinedBHDC(nn.Module):
                 self.ents.append(ent)
             else:
                 self.ents.append(None)
+            self.pads.append(CapacityPad(cfg.d_model, cfg.capacity_pad) if cfg.capacity_pad else None)
         self.head = nn.Linear(cfg.d_model, cfg.vocab_size)
 
     def forward(self, idx, return_telemetry=False):
         T = idx.shape[1]
         h = self.embed(idx) + self.pos[:T]
         teles = []
-        for core, ent in zip(self.cores, self.ents):
+        for core, ent, pad in zip(self.cores, self.ents, self.pads):
             if return_telemetry:
                 h, t = core(h, return_telemetry=True)
             else:
@@ -80,6 +97,8 @@ class CombinedBHDC(nn.Module):
                 else:
                     e_out = ent(h)
                 h = h + e_out
+            if pad is not None:
+                h = pad(h)
             teles.append(t)
         logits = self.head(h[:, -1])
         return (logits, teles) if return_telemetry else logits

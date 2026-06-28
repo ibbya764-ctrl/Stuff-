@@ -164,6 +164,9 @@ full grok — same honest caveats as §3.
   grok; trained leave-one-out attribution across core / +geometry / +entanglement
   / all-on (the harness is ready — `bhdc_combined.py` flags + telemetry); the §5
   `eigen` vs `generic` trained contrast; the ~100M run (§9), sized d_model≈720 /
-  ~14 layers.
+  ~14 layers. **Pre-registered, matched-budget configs are now staged** —
+  `configs/bhdc_{grok_p97,collapse_ab,geometry_ab,entangle_ab}.json`, launched via
+  `python3 bhdc_runner.py <config>` (refuses configs without a prediction + kill
+  condition, and A/Bs whose arms differ >2% in params). See `GPU_RUNS.md`.
 - **Deferred by the paper:** hyperbolic/squeeze geometries (v2, firewall
   question); exp-of-squeezing entanglement (v2, needs a Gaussian-optics sim).

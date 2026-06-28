@@ -1,0 +1,18 @@
+{
+  "name": "bhdc_entangle_ab",
+  "preregistration": {
+    "prediction": "The entangled section-5 pathway helps ONLY if it beats a capacity-matched control, not merely the bare core -- so the control arm is `core+capacity` (a generic residual MLP, capacity_pad=18, sized to the entanglement arm's parameter budget to within 0.1%), NOT plain core. Prediction: +entangle(eigen) beats core+capacity on val accuracy by more than 1 std (3 seeds); AND the operator-eigenbasis ladder beats the generic-ladder ablation (eigen > generic), since tying the Schmidt weights to the dilation operator's own spectrum is the load-bearing structural claim of section 5.4. Entanglement entropy should settle at a stable nonzero value (the CPU pilot settled ~0.41), not collapse to a product state.",
+    "kill_condition": "If +entangle(eigen) does not beat the capacity-matched control by >1 std, the gain (if any) is just parameters, not entanglement structure -> [TESTED-NEGATIVE], keep default-off. If eigen does not beat generic, the operator-in-the-wave-function basis earns nothing over a generic TMSV ladder -> drop the eigen tie, record the negative. If entanglement_entropy decays below the 0.05 floor (gate warning), the pathway collapsed to a product state and contributed nothing -- report as inert."
+  },
+  "seeds": [0, 1, 2],
+  "p": 97,
+  "train_frac": 0.5,
+  "baseline_arm": "core+capacity",
+  "model": {"d_model": 128, "n_layers": 2, "n_branches": 4, "collapse": "coherent", "collapse_nonlin": "abs2", "entangle_k": 8},
+  "arms": [
+    {"label": "core+capacity",     "model": {"capacity_pad": 18}},
+    {"label": "+entangle(eigen)",  "model": {"use_entanglement": true, "entangle_basis": "eigen"}},
+    {"label": "+entangle(generic)","model": {"use_entanglement": true, "entangle_basis": "generic"}}
+  ],
+  "train": {"steps": 30000, "batch_size": 0, "lr": 1e-3, "wd": 1.0, "eval_every": 200}
+}

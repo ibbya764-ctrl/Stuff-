@@ -1,0 +1,12 @@
+{
+  "name": "bhdc_grok_p97",
+  "preregistration": {
+    "prediction": "With the geometry/phase machinery on (coherent collapse, torus in the bank), BHDC groks modular addition (a+b) mod 97 on a 50% split: train accuracy saturates to ~1.0 and validation accuracy shows a clean late jump well above the 2/p chance line (target val > 0.5, typically -> ~1.0 for a true grok) within the step budget.",
+    "kill_condition": "If val accuracy never exceeds 2/p (=0.0206) within 30k steps while train saturates at ~1.0, the bias did not generalize on this task -> record [TESTED-NEGATIVE], do not soften. If train never saturates, raise steps (inconclusive, not negative)."
+  },
+  "seeds": [0, 1, 2],
+  "p": 97,
+  "train_frac": 0.5,
+  "model": {"d_model": 128, "n_layers": 2, "n_branches": 4, "collapse": "coherent", "collapse_nonlin": "abs2"},
+  "train": {"steps": 30000, "batch_size": 0, "lr": 1e-3, "wd": 1.0, "eval_every": 200}
+}

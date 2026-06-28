@@ -1,0 +1,19 @@
+{
+  "name": "bhdc_collapse_ab",
+  "preregistration": {
+    "prediction": "At fully matched budget (params identical across arms -- only the forward contraction differs), the COHERENT collapse arm reaches higher mean val accuracy on (a+b) mod 97 than both the single-scenario baseline and the incoherent mixture, by more than seed noise (3 seeds). This is the program's central attribution claim: inter-branch coherence (the interference cross-terms a mixture cannot reproduce), not multi-scenario averaging, carries the generalization. Saturating the CPU pilot's onset signal (coherent 0.064 vs 0.000) to a full grok.",
+    "kill_condition": "If coherent does not beat BOTH single and incoherent by more than 1 std across 3 seeds at matched budget and saturation, coherence is not the mechanism -> record [TESTED-NEGATIVE]. If coherent-complex beats coherent, the relative-phase arm is preferred (update the primary arm). If NO arm exceeds 2/p while train saturates, the task/budget is wrong, not the mechanism (inconclusive)."
+  },
+  "seeds": [0, 1, 2],
+  "p": 97,
+  "train_frac": 0.5,
+  "baseline_arm": "single",
+  "model": {"d_model": 128, "n_layers": 2, "n_branches": 4, "collapse_nonlin": "abs2"},
+  "arms": [
+    {"label": "single",           "model": {"collapse": "single"}},
+    {"label": "incoherent",       "model": {"collapse": "incoherent"}},
+    {"label": "coherent",         "model": {"collapse": "coherent"}},
+    {"label": "coherent-complex", "model": {"collapse": "coherent-complex"}}
+  ],
+  "train": {"steps": 30000, "batch_size": 0, "lr": 1e-3, "wd": 1.0, "eval_every": 200}
+}

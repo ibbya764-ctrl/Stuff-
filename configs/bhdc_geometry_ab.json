@@ -1,0 +1,17 @@
+{
+  "name": "bhdc_geometry_ab",
+  "preregistration": {
+    "prediction": "Turning on the GR geometry coupling (section 4: density->dilation scale, curvature->collapse temperature with Boltzmann modular-energy weighting, horizon gate) on top of the coherent core speeds grokking and/or raises final val accuracy on (a+b) mod 97 vs the coherent core alone, at matched budget (the coupling adds only ~0.004% params -- the signed/learnable knobs add negligible capacity). Mechanism: the density telemetry should move (>0) and the collapse temperature should specialize, otherwise the coupling is inert.",
+    "kill_condition": "If +geometry does not beat core by more than 1 std across 3 seeds (on grok speed = steps-to-val>0.5, or final val), the coupling is decoration on this task -> record [TESTED-NEGATIVE] and keep it default-off. If density_mean stays ~0 / kappa stays ~0, the coupling never engaged (mechanism gate fails) -- report as inert, not refuted."
+  },
+  "seeds": [0, 1, 2],
+  "p": 97,
+  "train_frac": 0.5,
+  "baseline_arm": "core",
+  "model": {"d_model": 128, "n_layers": 2, "n_branches": 4, "collapse": "coherent", "collapse_nonlin": "abs2"},
+  "arms": [
+    {"label": "core",      "model": {"geometry_coupling": false}},
+    {"label": "+geometry", "model": {"geometry_coupling": true}}
+  ],
+  "train": {"steps": 30000, "batch_size": 0, "lr": 1e-3, "wd": 1.0, "eval_every": 200}
+}
