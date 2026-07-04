@@ -1,0 +1,13 @@
+{
+  "name": "rung11_unitary_vs_projective_readout",
+  "track": "character",
+  "preregistration": {
+    "prediction": "Field-valued moral readouts (align_S/align_G over scale-space) computed via unitary re-coupling preserve the coherence telemetry -- reasoning quality unchanged with monitoring on vs off -- while matching or beating the pooled scalar crosscheck on flag quality, and the disagreement field localizes injected inconsistencies to the correct scale region.",
+    "kill_condition": "KILL if moral monitoring measurably degrades task performance (the observer effect returns), OR the field-valued readout flags no better than the scalar. Projective local moral readout is the NEGATIVE CONTROL and is expected to decohere; if it does not, the coherence claim itself is suspect."
+  },
+  "seed": 0,
+  "arms": ["scalar_crosscheck", "unitary_field_readout", "projective_local_readout_NEGATIVE_CONTROL", "no_monitoring"],
+  "requires": ["the unitary-observation experiment gate (v18 build order step 4)"],
+  "character": {"dim": 128, "monitor_modes": ["off", "unitary", "projective"]},
+  "notes": "v18 one-model note Section 4 falsification block. If it falsifies, Section 4 reverts to the wrapper conscience; nothing downstream breaks."
+}

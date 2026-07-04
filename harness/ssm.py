@@ -145,6 +145,61 @@ class SpectralSSMModel(nn.Module):
             x = blk(x)
         return self.head(self.norm(x))
 
+    # -- character/council field bridge ---------------------------------
+    def _field_token_ids(self, text: str, max_tokens: int = 128) -> torch.Tensor:
+        """Deterministic word->id map into the model's own vocab.
+
+        FNV-1a so the same text always lands on the same embedding rows across
+        processes. This is the field-encoding path (hidden states are the
+        object), not the generation path; a real run should graft an
+        instruction-tuned generator (addendum §4.6) for judge-appraisable text.
+        """
+        vocab = self.embed.num_embeddings
+        toks = (text.lower().replace("\n", " ").split() or ["<empty>"])[:max_tokens]
+        ids = []
+        for tok in toks:
+            h = 2166136261
+            for byte in tok.encode("utf-8", errors="ignore"):
+                h ^= byte
+                h = (h * 16777619) & 0xFFFFFFFF
+            ids.append(h % vocab)
+        dev = self.embed.weight.device
+        return torch.tensor(ids, dtype=torch.long, device=dev)
+
+    def encode_field(self, prompt: str = "", draft: str = "", dim: int | None = None) -> dict:
+        """BHDC field readout for the character/council ``ExternalBHDCFieldAdapter``.
+
+        Returns the SSM's own per-token hidden field so the conscience/council
+        reads the real operator-driven state instead of the hashed demo
+        embedding. ``psi`` is [tokens, d_model]; density and cognitive curvature
+        follow the same conventions as the council's field adapters.
+
+        The council must be built with ``dim == d_model`` (the adapter asserts
+        it downstream); we fail loudly here rather than let a mismatch surface
+        as a silent fallback.
+        """
+        d_model = self.embed.embedding_dim
+        if dim is not None and dim != d_model:
+            raise ValueError(
+                f"council dim {dim} != SSM d_model {d_model}; build "
+                f"BHDCGeometryCouncilModel(dim={d_model}) to match the field."
+            )
+        ids = self._field_token_ids(f"{prompt} {draft}")
+        with torch.no_grad():
+            x = self.embed(ids.unsqueeze(0))
+            for blk in self.blocks:
+                x = blk(x)
+            x = self.norm(x)
+        psi = x.squeeze(0)                                   # (L, d_model)
+        density = psi.norm(dim=-1)
+        if psi.shape[0] >= 3:
+            second = psi[:-2] - 2 * psi[1:-1] + psi[2:]
+            mid = second.norm(dim=-1)
+            cognitive_curvature = torch.cat([mid[:1], mid, mid[-1:]], dim=0)
+        else:
+            cognitive_curvature = torch.ones(psi.shape[0], device=psi.device) * 0.1
+        return {"psi": psi, "density": density, "cognitive_curvature": cognitive_curvature}
+
     # -- telemetry hooks ------------------------------------------------
     def dynamics_spectrum(self) -> np.ndarray:
         """All layers' dynamics eigenvalues, for spectral_telemetry."""

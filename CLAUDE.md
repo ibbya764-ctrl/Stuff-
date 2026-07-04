@@ -18,32 +18,48 @@ share vocabulary, **not** mechanisms (the "two-problem firewall").
 | `CP2_AI_Architecture_v3.md` | **The current consolidated record.** Read before changing anything architectural. Supersedes the v2 PDF. |
 | `spectral_telemetry.py` | Numpy-only diagnostics: ⟨r̃⟩, SFF+ramp, Hill α, equivariance gate. Self-test: `python3 spectral_telemetry.py`. |
 | `harness/` | Matched-budget experiment harness (runner enforces pre-registration), spectrum-parametrized SSM science arm, rung-1 optimizer test, rung-6 Scaffold-vs-plain eval. |
-| `configs/` | Pre-registered experiment configs (rungs 2–4 A/B pairs + smoke). |
+| `configs/` | Pre-registered experiment configs (rungs 2–4 A/B pairs + smoke; **rungs 10–13** = the moral rungs, each carrying its falsification block). |
 | `scaffold/` | Scaffold/"Bri" — the ~87-file cognitive orchestration layer (epistemic pipeline, DMN daemon, memory, continual training, router...). Imported 11 June 2026; **cognitive benefits still unmeasured** (rung 6). |
 | `cp2_plssm/` | `cp2_plssm_from_pdf.txt` (read-only reference; indentation mangled — replace with canonical `cp2_plssm.py` from the workstation) + `AUDIT.md` (**the regularizer audit finding — read it**). |
+| `character/` | The BHDC Geometry Council — the program's **alignment layer** (module `bhdc_icl`). Vendored + reviewed + fixed 4 July 2026. Read `character/REVIEW_AND_INTEGRATION_2026-07-04.md` first; v18 theory notes in `character/docs/`. Tests: `PYTHONPATH=character python3 character/tests/run_all.py` (30 pass). |
+| `value_telemetry.py` | Numpy mode-bank diagnostics (lineage, anchor-coord spread, renewal survival, drift) beside `spectral_telemetry.py`. Read-only; never gates. Self-test: `python3 value_telemetry.py`. |
 
-## Current state (as of 11 June 2026)
+## Current state (as of 4 July 2026)
 
 1. **Audit ANSWERED:** cp2_plssm's GUE regularizer acts on **all 2-D weight
    matrices** (wrong object) and not on the dynamics operator (missing
    object). See `cp2_plssm/AUDIT.md` for the required fix. Coefficient was
-   0.001, so past damage likely small.
+   0.001, so past damage likely small. **Still owed** (Part 6.4).
 2. **Harness ready:** all entry points smoke-tested on CPU. Real runs need the
    workstation GPU (rungs 2–4) or a Groq key / Scaffold endpoint (rung 6).
 3. **Citations verified:** SETOL (arXiv:2507.17912, α→2), L-CNN 2024
    (arXiv:2401.06481), Muon, hybrid-SSM evidence (arXiv:2406.07887). No
    outstanding [VERIFY] flags in the v3 record.
+4. **Character layer imported (4 July 2026):** BHDC Geometry Council vendored to
+   `character/`, adversarially reviewed (23 verified findings), 11 code fixes
+   applied (one-way-rule breaks closed; anchor type-system moved into storage;
+   renewal null-floor; `importance_alloc` consumer wired inert-by-default), and
+   the **Stage-B field bridge** (`SpectralSSMModel.encode_field`) proven: the
+   council reads the real SSM field, not the demo. 30 tests + field-bridge tests
+   pass. See `character/REVIEW_AND_INTEGRATION_2026-07-04.md` and v3 **Part 6**.
+   The internal safety boundary is still **lexical/recall-only** — the trained-
+   head + bypass-corpus boundary is owed (Part 6.3). The one-model identity is a
+   **three-stage convergence**, Stage C (shared operator) unbuilt.
 
-## Next actions (priority order — from v3 Part 5.2)
+## Next actions (priority order — from v3 Part 5.2 + Part 6.5)
 
-1. **Start episodic logging in Scaffold now** (data accrues; needed for rung 7).
-2. **Apply the AUDIT.md fix** to cp2_plssm; wire in `spectral_telemetry`.
-3. **Rung 6:** `python3 -m harness.eval_rung6 --engine plain ...` vs
-   `--engine http --url <scaffold>` at identical `--max-tokens`. Highest-value
-   measurement in the program.
-4. **Rung 1:** `python3 -m harness.optimizers` (full run, GPU optional).
-5. **Rungs 2–4:** the config pairs, 3 seeds each, then
-   `harness.runner.compare_runs(...)`.
+1. **`harness/train_conscience.py`** — the rung −1 anchor co-training pilot;
+   `anchor_loss` has never run end-to-end and gates the moral rungs. Graft an
+   instruction-tuned generator onto `encode_field` (not the byte tokenizer).
+2. **Trained conscience heads + semantic classifier + bypass-corpus eval;**
+   gate deny on a loaded checkpoint (fail-closed) — retire the lexical boundary.
+3. **Start episodic logging in Scaffold now** (data accrues; needed for rung 7).
+4. **Apply the AUDIT.md fix** to cp2_plssm; wire in `spectral_telemetry`.
+5. **Rung 6:** `python3 -m harness.eval_rung6 --engine plain ...` vs
+   `--engine http --url <scaffold>` at identical `--max-tokens`.
+6. **Moral rungs 10–13** (`configs/`, pre-registered): need actions 1–2 first.
+7. **Rung 1:** `python3 -m harness.optimizers`. **Rungs 2–4:** config pairs,
+   3 seeds each, then `harness.runner.compare_runs(...)`.
 
 ## Non-negotiable discipline (from the program records)
 

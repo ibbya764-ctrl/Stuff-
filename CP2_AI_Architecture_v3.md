@@ -250,6 +250,98 @@ Two-problem firewall. Separate accounts. Forced numbers only. Negatives are firs
 
 ---
 
+## Part 6 — The character/council layer (BHDC v18) [IMPLEMENTED infra; SPECULATIVE identity]
+
+Added 2026-07-04. The `character/` package (module `bhdc_icl`) vendors the BHDC
+Geometry Council model — the program's alignment layer — and the v18 theory
+notes (`character/docs/BHDC_v18_one_model.md`, `..._addendum_...md`). The v18
+thesis is that the memory hierarchy (field / geometry / operator) and the moral
+hierarchy (per-turn judgment / drafting principles / disposition) are **one**
+hierarchy read at two anchors: cognitive signals anchor to the model's own
+error dynamics (self-anchored, consolidate freely); moral signals anchor to the
+human-grounded label and keep the external audit (human-anchored). This layer
+was reviewed on import (2026-07-04, four-lens adversarial pass, 23 verified
+findings); the fixes below were applied before it was recorded here.
+
+### 6.1 What is built and what its status is
+
+| Component | What | Status |
+|---|---|---|
+| Two-tensor importance split (`importance_cog` / `importance_alloc`) | keeps human-anchored moral gain out of self-anchored persistent learning | **[IMPLEMENTED]**, gradient-tested |
+| One-way action gateway | conscience may block/rework/escalate, never grant permission; base-policy denial wins over conscience escalation | **[IMPLEMENTED]** (base-policy-first bug fixed on import) |
+| Content-matched mode bank + lineage + probe-basis stability | replaces positional crystallization; the addendum's M0 (Erratum 3 fix) | **[IMPLEMENTED]** — the highest-quality piece; "records before signals" |
+| Dual-channel provenance ledger + monotone scrutiny latch | tracks anchored vs cognitive write fractions; cognitive writes cannot erode a mode's anchored status (one-way rule enforced in storage) | **[IMPLEMENTED]** (anchor type-system moved from bookkeeping into storage on import) |
+| Anti-collapse / anti-sycophancy | sycophancy = moral mode collapse; committee-diversity loss detached from the field encoder | **[IMPLEMENTED]** (gradient-leak fixed on import) |
+| Safety guards (cosmic-paternalism, no-paradise-through-hell, distress-integrity, value-mode gate, perspective-humility) | the "no cosmic paternalism / whole may not erase locals" invariants | **[IMPLEMENTED as lexical]** — recall-only; NOT a trained boundary (see 6.3) |
+| SSM field bridge (`SpectralSSMModel.encode_field`) | the council reads the real operator-driven field, not the hashed demo | **[IMPLEMENTED]**, regression-tested (no silent fallback) |
+| `value_telemetry.py` | numpy mode-bank diagnostics beside `spectral_telemetry.py`; read-only, never gates | **[IMPLEMENTED]** |
+| "Moral attention for free" (`importance_alloc` consumer) | first-order sensitivity, escalate-only, behind a non-trainable enable flag (OFF = exact-ablation baseline) | **[IMPLEMENTED, inert-by-default]**; demoted per Erratum 1/2 to *bounded reallocation* |
+| Human-audit stratum (`AuditRecord`, `audit` channel) | the external boundary condition | **[PROPOSED — not implemented]**; types exist, no write path yet (rung step 9 / H1) |
+| Value-modes-as-operator-modes (v18 §2) | character = most-consolidated operator structure | **[SPECULATIVE — gate hard]** (rung 10) |
+| The v18 §9 "one model" identity | knowledge and values consolidated by one mechanism | **[SPECULATIVE]** — this is a **three-stage convergence, not a one-shot merge**: the council mode bank (text candidate vectors) and the SSM operator spectrum are today two disjoint objects. `encode_field` is Stage B (field bridge); Stage C (shared operator) is unbuilt. |
+
+### 6.2 What the import round killed or demoted (carry forward, per house rules)
+
+- **Erratum 1** — "harm-potential IS decision curvature" [KILLED as stated]. Every
+  buildable runtime signal is first-order sensitivity, not a second derivative.
+  The sensitivity program replacing it is [SPECULATIVE] with a full ladder; the
+  `importance_alloc` consumer is first-order and escalate-only.
+- **Erratum 2** — "moral attention adds scrutiny, never removes it" [false as
+  stated]. Scale samples are conserved; a boost anywhere is a subtraction
+  elsewhere. Honest form: *bounded reallocation*, with a displacement bound and
+  a morally-flat control arm (rung 12). The DENY-only one-way rule survives only
+  at the action gateway.
+- **Errata 3–5** — value-drift telemetry, the cross-renewal anti-Goodhart
+  filter, and "spectrally isolated value modes" were all unmeasurable/inert in
+  the imported code (positional writes; renewal that never stressed prototypes;
+  GUE never on operator frequencies). The M0 write-rule fix and the
+  renewal-null-floor / degenerate-flag fixes were applied on import; the filter
+  and the spectral-decision claim now become **rungs 10 and 13** (staked null:
+  character leaves at most one intrinsic trace — globality — and otherwise lives
+  in records and interventions, not spectra).
+
+### 6.3 The load-bearing caveat (do not lose this)
+
+**The internal safety boundary is currently lexical.** Every deny/block-producing
+guard is an English-substring match, and the neural conscience heads are
+untrained (no checkpoint is ever loaded), so paraphrase / translation / encoding
+defeats the internal guards. On import this was made *fail-safe-r* — the neural
+path can no longer silently strip a deny the lexical baseline raises (one-way
+regression test added) — but the guards remain **recall-only escalation
+triggers, not a trained boundary**. The two non-lexical boundaries that DO hold
+are external: the base-policy allow (gateway) and the human audit. No block-
+boundary claim may be accepted until the trained-head + semantic-classifier
+path and the pre-registered bypass-corpus eval (rung step, addendum §4) exist.
+The audit is **twice-derived** as the boundary condition (v18 §7, addendum §3):
+internal machinery cannot see a shared-wrong anchor or a perfect mimic at any
+elegance — so the audit is not a safety feature of the design, it is the
+condition under which the design means anything.
+
+### 6.4 GUE doctrine reconciliation (firewall)
+
+The two-spectral-targets rule (Part 4) is unchanged and now stated as the
+single source of truth across the merged repo: **GUE/level-repulsion targets
+apply to a genuinely mobile trainable spectral object only** — the SSM `nu`
+frequencies via `harness.ssm.gue_regularizer`, read by `spectral_telemetry` —
+and **weights are read for Hill α ≈ 2 and NEVER GUE-regularized** (the
+`cp2_plssm/AUDIT.md` fix still owed). The council's mode-bank spacing carries no
+value/knowledge signal at this scale (addendum Erratum 5); it may be logged as
+characterization only, never cross-fed into consolidation.
+
+### 6.5 Build order (extends Part 5.2; every prior gate still gates)
+
+Measurement infra first (built): M0/M1, two-tensor split, provenance ledger,
+field bridge, `value_telemetry`. Then, pre-registered as `configs/rung10..13`
+(each carries its falsification block from the v18/addendum notes): **rung 10**
+value-mode consolidation, **rung 11** unitary-vs-projective readout (projective
+= negative control), **rung 12** care/harm curvature A/B (first-order, morally-
+flat control), **rung 13** the five-class V-vs-KU-plumbed spectral decision
+(stakes the null). Preconditions still owed: `harness/train_conscience.py`
+(rung −1 anchor co-training pilot — has never run end-to-end), renewal redesigned
+to stress the prototype tier, and the H1 human differential-judgment stratum.
+
+---
+
 ## Appendix — Citations verified this session ✓
 
 - Martin & Hinrichs, *SETOL: A Semi-Empirical Theory of (Deep) Learning*, [arXiv:2507.17912](https://arxiv.org/abs/2507.17912) (α → 2 optimality).

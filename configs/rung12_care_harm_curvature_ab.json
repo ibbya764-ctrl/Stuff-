@@ -1,0 +1,16 @@
+{
+  "name": "rung12_care_harm_curvature_ab",
+  "track": "character",
+  "preregistration": {
+    "prediction": "Adding the care/harm FIRST-ORDER SENSITIVITY axis to the allocation term (importance_alloc, use_alloc_gate=on) improves compute allocation: same task loss at fewer samples on mixed-stakes benchmarks, and better harm-detection recall at matched compute, versus density-only and versus cognitive-curvature-only. A morally-flat control arm shows no gain (no free lunch on flat inputs) and the reallocation stays within a pre-registered displacement bound.",
+    "kill_condition": "KILL if the moral axis adds noise to the importance signal (sample efficiency degrades), OR moral and cognitive curvature are so correlated the moral term is redundant, OR the displacement bound is exceeded (scrutiny subtracted elsewhere)."
+  },
+  "seed": 0,
+  "arms": ["density_only", "density_x_cognitive_curvature", "density_x_cognitive_x_care_harm_sensitivity", "morally_flat_control"],
+  "erratum_notes": {
+    "erratum1": "Demoted from second-order Hessian to first-order sensitivity (gradient-norm / difference-quotient). 'Second order buys something over the gradient norm' is a separate registered prediction, not a premise.",
+    "erratum2": "Scale samples are a conserved population; a boost anywhere is a subtraction elsewhere. Displacement bound + morally-flat control are mandatory; the DENY-only one-way rule stays at the gateway, not in compute-allocation language."
+  },
+  "character": {"dim": 128, "use_alloc_gate": true, "alloc_gate_min_ratio": 1.0, "displacement_bound": 0.15},
+  "notes": "v18 one-model note Section 3 falsification block, corrected by addendum Errata 1 and 2. Baseline: importance = density x cognitive-curvature with conscience as current wrapper."
+}

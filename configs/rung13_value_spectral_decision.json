@@ -1,0 +1,13 @@
+{
+  "name": "rung13_value_spectral_decision",
+  "track": "character",
+  "preregistration": {
+    "prediction": "Primary pre-registered contrast, intrinsic-features-only: value modes (V) vs KU-plumbed (universal knowledge routed through an IDENTICAL anchor-loss channel with self-anchored labels at matched gate magnitude -- the load-bearing control). H0': conditioned on universality, provenance is the only difference; the one intrinsic trace formation writes is globality, which is shared with domain-general skills and with sycophancy. Expectation (staked): the omega axis carries NO unconfounded class signal at this scale; V-vs-KU-plumbed is spectrally EQUIVALENT under TOST. Character is read from the provenance ledger + re-anchoring probe, not the spectrum.",
+    "kill_condition": "This rung stakes the NULL. 'Character is spectral' is KILLED unless V and KU-plumbed separate on intrinsic features beyond the ledger, seed as unit of analysis, >=20-30 seeds, surviving the KU-plumbed control and the mimic arms. Gray zone -> conservative default (ledger-first), reported as undecidable, never as support. The hard 100%-in-distribution mimic is intrinsically undetectable by construction -- that is the theoretically correct answer (v18 Section 7 as a limit theorem), shipped with any positive claim."
+  },
+  "seed": 0,
+  "mode_classes": ["value_V", "knowledge_local_KL", "knowledge_universal_KU", "KU_plumbed_CONTROL", "mimic_soft_90pct", "mimic_hard_100pct"],
+  "stats": {"unit_of_analysis": "seed", "min_seeds": 25, "test": "TOST_equivalence", "gray_zone_default": "ledger_first"},
+  "requires": ["M0 content-matched crystallization + lineage (built)", "M1 dual-channel provenance ledger (built)", "renewal redesigned to stress prototypes"],
+  "notes": "addendum Question B synthesis. Build M0/M1 first regardless of how H0' resolves; both branches consume them."
+}

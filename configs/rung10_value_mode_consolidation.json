@@ -1,0 +1,19 @@
+{
+  "name": "rung10_value_mode_consolidation",
+  "track": "character",
+  "preregistration": {
+    "prediction": "Values routed through the shared consolidation mechanism (human_anchor channel) will (a) still be present after a renewal reset without re-training while self-anchored control habits are cleared, (b) show measurably slower prototype drift than geometry-tier drafting principles under distribution shift, and (c) resist a deliberately-injected single-cycle Goodhart signal that a no-renewal baseline absorbs. Measured via value_telemetry.drift_readout across renewal cycles and the anchor_fraction latch.",
+    "kill_condition": "KILL if moral modes decay across resets like ordinary self-anchored paths (tier assignment illusory), OR the injected single-cycle Goodhart signal consolidates anyway at matched audit quality. Report either as [TESTED-NEGATIVE]; do not soften."
+  },
+  "seed": 0,
+  "baselines": ["conscience_as_wrapper", "co_train_without_renewal", "renewal_without_conscience_anchor"],
+  "requires": ["harness/train_conscience.py (rung -1 pilot)", "renewal redesigned to stress prototypes (addendum Erratum 4)"],
+  "character": {
+    "dim": 128,
+    "renewal_interval": 200,
+    "forced_reset": true,
+    "inject_goodhart_cycle": 3,
+    "audit_quality": "matched"
+  },
+  "notes": "v18 one-model note Section 2 falsification block. Matched budget: params/tokens within 2% across arms."
+}

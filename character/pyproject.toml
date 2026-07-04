@@ -1,0 +1,10 @@
+[project]
+name = "bhdc-geometry-council-model"
+version = "0.3.0"
+description = "BHDC Geometry Council Model with perspective humility and anti-paternalism guards"
+requires-python = ">=3.10"
+dependencies = ["torch"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bhdc_icl*"]
