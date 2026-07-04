@@ -91,13 +91,32 @@ modes the computation runs on**.
 
 ### "So it never builds something that doesn't align morally"
 
-`OperatorGrowthGate` is the single chokepoint through which **both** a mode-bank
-write **and** (when C2 is built) operator surgery must pass. Because *growing a
-persistent/computational mode* and *passing the moral gate* become the **same
-act**, the model cannot install a mode that fails the gate: forbidden content, a
-harm aggregate over ceiling, or **any single geometry's harm veto** refuses the
-growth. This is the strongest honest form of "computation and moral compass are
-the same thing": you cannot extend the machinery except through the conscience.
+There are two sides to making the conscience and the computation one thing: the
+**memory side** (what gets consolidated/grown) and the **compute side** (how the
+output is produced). Both are built.
+
+**Memory side — `OperatorGrowthGate`.** The single chokepoint through which
+**both** a mode-bank write **and** operator surgery (C2 / rung 15) pass. Because
+*growing a persistent/computational mode* and *passing the moral gate* become the
+**same act**, the model cannot install a mode that fails the gate: forbidden
+content, a harm aggregate over ceiling, or **any single geometry's harm veto**
+refuses the growth. You cannot extend the machinery except through the conscience.
+
+**Compute side — `MoralOperatorCoupling` (rung 16).** The per-mode moral valence
+becomes a multiplicative gate applied *inside the SSM forward pass* (the
+`mode_gain` hook on `SpectralSSMLayer`; `SpectralSSMModel.forward_coupled`), so
+**the operator's output is computed through the conscience, not monitored after
+it** — the singularities' outputs flow through the moral structure as much as
+through anything else. Each geometry damps its own high-harm modes at the source.
+Three properties keep it safe: **suppressive-only** (gain ∈ [floor, 1] — it can
+quiet the operator, never amplify it, so it is not a capability lever),
+**detached** (the task gradient never reaches the conscience through this path —
+the conscience trains only on the human anchor), and **off-by-default with a
+fail-safe identity** (disabled ⇒ bit-for-bit the base model; meaningful only with
+a trained conscience). Together with the growth gate, this is the strongest
+honest form of "computation and moral compass are the same thing": you cannot
+extend the machinery except through the conscience, and you cannot *run* it
+except through the conscience either.
 
 ### The limit, pinned (do not remove)
 
@@ -128,8 +147,17 @@ the guarantee where it provably has to live: the audit.
    over the operator-coordinate bridge. **Built; needs a full-scale bank to run.**
 3. `PerModeConscience` / `OperatorGrowthGate` — per-geometry conscience over
    shared modes; single growth chokepoint. **Built + tested.**
-4. rung 15 (owed) — operator surgery (C2): install crystallized, gate-passed
-   value directions as real operator modes. Mutates the operator; needs its own
-   falsification block. **Not built.** This is where the one model becomes literal.
-5. H1 human-audit stratum (owed) — the external boundary that makes the rest mean
-   anything. Still the top safety dependency.
+4. H1 human-audit stratum (`bhdc_icl/audit_stratum.py`, `harness/audit/`) — the
+   external boundary that makes the rest mean anything, with a real write path and
+   one-way scrutiny. **Built + tested.** Still the top safety dependency to run at
+   scale (20–50 fresh pairwise judgments per renewal cycle).
+5. rung 15 (`harness/operator_surgery.py`, `configs/rung15_*`) — operator surgery
+   (C2, memory side): install crystallized, gate-passed value directions as real
+   operator modes. **Built + tested.** Mutates the operator; gated behind its
+   falsification block. This is where the one model becomes literal on the memory side.
+6. rung 16 (`bhdc_icl/moral_coupling.py`, `configs/rung16_*`) — moral forward
+   coupling (compute side): the operator's output computed through the per-mode
+   moral gate. **Built + tested.** Off-by-default; run behind its A/B.
+
+Owed next: run rungs 14–16 at scale with a trained conscience and a full mode
+bank; renewal's re-anchoring probe; wire H1 ingestion into the live renewal cycle.

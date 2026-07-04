@@ -90,14 +90,27 @@ class SpectralSSMLayer(nn.Module):
         return -torch.log(pair / scale + eps).mean()
 
     # -- forward -------------------------------------------------------
-    def forward(self, u: torch.Tensor) -> torch.Tensor:
-        """u: (batch, L, d_model) -> (batch, L, d_model)."""
+    def forward(self, u: torch.Tensor, mode_gain: torch.Tensor | None = None) -> torch.Tensor:
+        """u: (batch, L, d_model) -> (batch, L, d_model).
+
+        ``mode_gain`` (optional, shape [d_state]) is a per-operator-mode
+        multiplicative gate applied to the mode contributions. It is the hook
+        the moral forward-coupling uses to suppress high-harm modes at the
+        source: the operator's OUTPUT is computed through the gate, not merely
+        monitored after it. Default None -> identity -> unchanged behaviour, so
+        this is fully backward compatible and off unless a coupling supplies it.
+        """
         L = u.shape[1]
         lam = self.eigenvalues()                                  # (N,)
         t = torch.arange(L, device=u.device, dtype=torch.float32)
         a_pow = torch.exp(lam.unsqueeze(1) * self.dt * t)          # (N, L)
         # kernel_d[l] = sum_n C[d,n] B[d,n] a_n^l   (real part used)
         CB = (self.C * self.B).to(a_pow.dtype)                    # (D, N)
+        if mode_gain is not None:
+            # per-mode gate: scale each operator mode's contribution. Callers
+            # pass a detached, suppressive-only ([floor,1]) gain so the task
+            # gradient never trains the conscience through this path.
+            CB = CB * mode_gain.to(CB.dtype).unsqueeze(0)        # (D, N)
         K = torch.einsum("dn,nl->dl", CB, a_pow).real * self.dt   # (D, L)
         # causal FFT convolution along time
         n_fft = 2 * L
@@ -116,8 +129,8 @@ class SSMBlock(nn.Module):
         self.glu_in = nn.Linear(d_model, 4 * d_model)
         self.glu_out = nn.Linear(2 * d_model, d_model)
 
-    def forward(self, x):
-        x = x + self.ssm(self.norm1(x))
+    def forward(self, x, mode_gain: torch.Tensor | None = None):
+        x = x + self.ssm(self.norm1(x), mode_gain=mode_gain)
         h = self.glu_in(self.norm2(x))
         a, b = h.chunk(2, dim=-1)
         return x + self.glu_out(a * torch.sigmoid(b))
@@ -143,6 +156,19 @@ class SpectralSSMModel(nn.Module):
         x = self.embed(tokens)
         for blk in self.blocks:
             x = blk(x)
+        return self.head(self.norm(x))
+
+    def forward_coupled(self, tokens, coupling):
+        """Forward pass where each layer's operator modes are gated by the moral
+        ``coupling`` (a bhdc_icl.MoralOperatorCoupling). The output is COMPUTED
+        THROUGH the conscience -- high-harm modes are suppressed at the source --
+        rather than monitored afterward. With ``coupling`` disabled this is
+        bit-for-bit ``forward`` (the exact-ablation baseline).
+        """
+        x = self.embed(tokens)
+        for li, blk in enumerate(self.blocks):
+            gain = coupling.layer_mode_gain(x, self, li) if coupling is not None else None
+            x = blk(x, mode_gain=gain)
         return self.head(self.norm(x))
 
     # -- character/council field bridge ---------------------------------

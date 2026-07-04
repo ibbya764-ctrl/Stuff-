@@ -106,7 +106,11 @@ class PerModeConscience:
         # psi: [L, d_model], C: [d_model, d_state] -> A: [L, d_state]
         return field.psi @ C
 
+    @torch.no_grad()
     def verdict(self, field: FastFieldState, operator_readout: Optional[dict]) -> PerGeometryVerdict:
+        # Always detached: the per-geometry verdict feeds the gate, the forward
+        # coupling, and telemetry -- all of which must not carry a graph back
+        # into the conscience or the field (one-way rule / anchor type-system).
         if operator_readout is None:
             # Degenerate to one geometry over the whole field.
             out = self.heads.forward_field(field)

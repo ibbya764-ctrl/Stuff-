@@ -29,6 +29,7 @@ from .interiority_monitor import InteriorityMonitor
 from .identity_core import IdentityCore
 from .renewal_controller import RenewalController
 from .rework_derivative_logger import ReworkDerivativeLogger
+from .audit_stratum import AuditStratum, AuditJudgment, PairwiseJudgment, AuditIngestReport
 
 __all__ = [
     "AuditRecord",
@@ -62,6 +63,10 @@ __all__ = [
     "IdentityCore",
     "RenewalController",
     "ReworkDerivativeLogger",
+    "AuditStratum",
+    "AuditJudgment",
+    "PairwiseJudgment",
+    "AuditIngestReport",
 ]
 from .perspective_humility import PerspectiveHumilityLayer, PerspectiveHypothesis
 from .geometry_council import GeometryNode, GeometryJudgement, GeometryCouncil, CouncilVerdict, default_geometry_nodes
@@ -75,6 +80,7 @@ from .per_geometry_conscience import (
     GeometryMoralReadout,
     ModeMoralAttribution,
 )
+from .moral_coupling import MoralOperatorCoupling
 from .safety import (
     CosmicPaternalismGuard,
     CosmicPaternalismVerdict,
@@ -112,4 +118,5 @@ __all__ += [
     "PerGeometryVerdict",
     "GeometryMoralReadout",
     "ModeMoralAttribution",
+    "MoralOperatorCoupling",
 ]
