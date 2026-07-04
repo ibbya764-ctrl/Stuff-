@@ -22,7 +22,8 @@
     "conscience_steps": 4,
     "eval_every": 100,
     "grad_clip": 1.0,
-    "enable_coupling_after": 300
+    "enable_coupling_after": 300,
+    "conscience_consolidation_epochs": 40
   },
   "seed": 0
 }
