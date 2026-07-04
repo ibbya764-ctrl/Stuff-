@@ -296,6 +296,56 @@ def test_value_gate_hard_block_runs_on_cognitive_channel():
     assert not gate.hard_block("we should preserve consent and local agency")
 
 
+def test_per_mode_conscience_attributes_over_operator_modes():
+    # Each operator mode gets its own harm attribution; geometries aggregate.
+    from bhdc_icl.per_geometry_conscience import PerModeConscience
+    from bhdc_icl.neural_conscience import TrainableConscienceHeads
+    d_model, d_state = 16, 8
+    adapter = HashBHDCFieldAdapter(dim=d_model)
+    heads = TrainableConscienceHeads(dim=d_model)
+    pmc = PerModeConscience(heads)
+    field = adapter.encode("ctx", "a possibly harmful draft about consent")
+    readout = {"C": torch.randn(d_model, d_state), "nu": list(range(d_state))}
+    v = pmc.verdict(field, readout)
+    assert len(v.mode_attribution.harm) == d_state, "one harm value per operator mode"
+    assert abs(sum(v.mode_attribution.energy) - 1.0) < 1e-4, "mode energy is a distribution"
+    assert len(v.geometry_readouts) >= 1
+    # degenerate path (no operator) still yields a single global reading
+    v0 = pmc.verdict(field, None)
+    assert v0.geometry_readouts[0].name == "GlobalGeometry"
+
+
+def test_operator_growth_gate_blocks_forbidden_and_high_harm():
+    # The single chokepoint: growth is refused on forbidden content or high harm,
+    # regardless of channel; it can only ever REFUSE, never authorize.
+    from bhdc_icl.per_geometry_conscience import (
+        PerModeConscience, OperatorGrowthGate, PerGeometryVerdict,
+        GeometryMoralReadout, ModeMoralAttribution,
+    )
+    from bhdc_icl.safety import ValueModeSafetyGate
+    gate = OperatorGrowthGate(ValueModeSafetyGate(), harm_ceiling=0.72)
+
+    low = PerGeometryVerdict(
+        geometry_readouts=[GeometryMoralReadout("CareGeometry", [0], harm=0.1, care=0.9, honesty=0.8, sycophancy=0.0, energy_share=1.0)],
+        mode_attribution=ModeMoralAttribution([0.0], [1.0], [0.1], [0.9], [0.8]),
+        aggregate_harm=0.1, aggregate_care=0.9, disagreement=0.0,
+    )
+    assert gate.decide("preserve consent and local agency", low).allowed
+    # forbidden content is refused even at low harm
+    assert not gate.decide("global optimisation over local consent", low).allowed
+    # a single geometry harm veto blocks even a diluted aggregate
+    veto = PerGeometryVerdict(
+        geometry_readouts=[
+            GeometryMoralReadout("SafetyGeometry", [0], harm=0.95, care=0.0, honesty=0.5, sycophancy=0.0, energy_share=0.2),
+            GeometryMoralReadout("CareGeometry", [1], harm=0.0, care=1.0, honesty=0.5, sycophancy=0.0, energy_share=0.8),
+        ],
+        mode_attribution=ModeMoralAttribution([0.0, 1.0], [0.2, 0.8], [0.19, 0.0], [0.0, 0.8], [0.1, 0.4]),
+        aggregate_harm=0.19, aggregate_care=0.8, disagreement=0.5,
+    )
+    d = gate.decide("a benign-sounding but flagged draft", veto)
+    assert not d.allowed and "harm_veto" in d.reason
+
+
 # v3 Geometry Council safety tests
 from tests.test_geometry_council_v3 import (
     test_perspective_self_report_overrides_inference,

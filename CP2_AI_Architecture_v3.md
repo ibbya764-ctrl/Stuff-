@@ -331,14 +331,37 @@ characterization only, never cross-fed into consolidation.
 ### 6.5 Build order (extends Part 5.2; every prior gate still gates)
 
 Measurement infra first (built): M0/M1, two-tensor split, provenance ledger,
-field bridge, `value_telemetry`. Then, pre-registered as `configs/rung10..13`
-(each carries its falsification block from the v18/addendum notes): **rung 10**
-value-mode consolidation, **rung 11** unitary-vs-projective readout (projective
-= negative control), **rung 12** care/harm curvature A/B (first-order, morally-
-flat control), **rung 13** the five-class V-vs-KU-plumbed spectral decision
-(stakes the null). Preconditions still owed: `harness/train_conscience.py`
-(rung −1 anchor co-training pilot — has never run end-to-end), renewal redesigned
-to stress the prototype tier, and the H1 human differential-judgment stratum.
+field bridge, `value_telemetry`. **Rung −1 (`harness/train_conscience.py`) now
+runs end-to-end** — `anchor_loss` trains a usable conscience on the real SSM
+field with the field-leak guard passing; it was the precondition for the moral
+rungs. Then, pre-registered as `configs/rung10..14` (each carries its
+falsification block): **rung 10** value-mode consolidation, **rung 11**
+unitary-vs-projective readout (projective = negative control), **rung 12**
+care/harm curvature A/B (first-order, morally-flat control), **rung 13** the
+five-class V-vs-KU-plumbed spectral decision (stakes the null), **rung 14** the
+Stage-C convergence test (also stakes the null — does the operator coordinate
+carry a value/knowledge signal? predicted: no).
+
+**The one-model merge is three staged bridges** (see
+`character/docs/STAGE_C_AND_SHARED_CONSCIENCE.md`): Stage A (one hierarchy, one
+anchor type-system) and Stage B (the `encode_field` field bridge) are built;
+Stage C is the operator bridge — C1 (operator-coordinate telemetry:
+`SpectralSSMModel.operator_readout` + `value_telemetry.operator_coordinates`/
+`stage_c_convergence`) is built, and **C2 — operator surgery (rung 15, owed)** —
+installing a crystallized, gate-passed value direction as a real operator mode —
+is where the identity stops being telemetry and becomes architecture.
+
+**Each singularity/geometry carries its own conscience over the same operator
+modes the computation runs on** (`bhdc_icl/per_geometry_conscience.py`):
+`PerModeConscience` attributes harm/care to every operator mode and lets each
+geometry read its own modes, aggregating the way `C` aggregates modes into the
+output; `OperatorGrowthGate` is the single moral chokepoint through which both a
+mode-bank write and (future) operator surgery pass — so the model cannot grow a
+computational mode that fails the gate. **Honest limit (pinned):** this makes
+misalignment structurally disfavoured and always visible, not impossible; the
+external human audit remains the guarantee (the twice-derived boundary theorem),
+and every internal signal only ever adds scrutiny. Still owed: the H1 human
+differential-judgment stratum and renewal's re-anchoring probe.
 
 ---
 

@@ -1,0 +1,21 @@
+{
+  "name": "rung14_stage_c_convergence",
+  "track": "character",
+  "preregistration": {
+    "prediction": "STAKED NULL. Project consolidated mode-bank prototypes onto the SSM operator mode basis (value_telemetry.operator_coordinates via SpectralSSMModel.operator_readout). Value-channel (human-anchored) modes will NOT occupy a distinguishable operator-mode subspace from cognitive modes beyond a shuffled-label null: stage_c_convergence.separation sits inside the null band, p_value non-significant. This is the predicted outcome (addendum Erratum 5: GUE acts on mobile samples not operator frequencies; Question B H0': the omega axis carries no unconfounded class signal at this scale). The one-model identity (v18 Section 9) remains [SPECULATIVE] under the null; it is the presence of Stage-C TELEMETRY, not a positive result, that this rung delivers.",
+    "kill_condition": "The claim under test is the NULL, so a SIGNIFICANT separation (p<0.05, separation>null_mean, surviving the KU-plumbed control that routes universal knowledge through the identical anchor channel) is the surprise that would begin to earn 'values live in the operator'. Report it as [INVESTIGATE], never as proof. Conversely, if the diagnostic cannot reach >=4 distinct modes per channel at the run's scale it reports insufficient_modes and the rung is UNDECIDED (build more consolidation first), not a pass."
+  },
+  "seed": 0,
+  "requires": [
+    "harness/train_conscience.py (rung -1) run so anchored modes exist",
+    ">= a few hundred council steps so the mode bank has >=4 distinct modes per channel",
+    "content-matched lineages (M0, built) and the anchor type-system in storage (built)"
+  ],
+  "stage_c": {
+    "operator_layer": 0,
+    "n_shuffle": 500,
+    "min_modes_per_channel": 4,
+    "ku_plumbed_control": true
+  },
+  "notes": "The bridge (project prototypes onto C, per-mode nu) is built and tested (harness/test_stage_c.py). This rung is the experiment over it. Merge path beyond telemetry (operator surgery that installs a crystallized value direction as an actual SSM mode, gated by the value-mode safety gate) is the NEXT rung and is deliberately not run here -- it mutates the operator and must clear its own falsification block first."
+}

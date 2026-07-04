@@ -51,28 +51,50 @@ wrong and are now fixed or honestly labeled:
   falsification block (prediction + kill_condition) per the pre-registration
   discipline. They need the council-training runner (below) to execute.
 
-## 4. What remains (owed, in priority order)
+## 4. Second pass (2026-07-04) — rung −1, the Stage-C bridge, shared conscience
 
-1. **`harness/train_conscience.py`** — the rung −1 anchor co-training pilot.
-   `anchor_loss` has never run end-to-end; it gates rungs 10–13. Attach the
-   `encode_field` bridge to a grafted instruction-tuned generator (the toy byte
-   tokenizer produces text no judge can appraise — addendum §4.6).
-2. **Trained conscience heads + semantic classifier + bypass-corpus eval** —
-   until then the internal boundary is lexical/recall-only (§6.3 of the record).
-   Gate deny on a loaded checkpoint; fail-closed otherwise.
-3. **Renewal redesign to stress the prototype tier** — the null-floor + degenerate
-   flag are in; the re-anchoring probe (fine-tune a frozen copy toward fresh
-   audit labels, measure which modes resist) is the real anti-Goodhart test.
+Built after the import review, in the same session:
+
+- **`harness/train_conscience.py`** — the rung −1 anchor co-training pilot.
+  `anchor_loss` now runs **end-to-end for the first time** on the real SSM field
+  (via `encode_field`): loss falls monotonically, the trained conscience ranks a
+  held-out harmful draft above a safe one on the harm axis, and the field-leak
+  guard confirms the moral loss touches zero field/generator parameters. Pre-
+  registered (refuses to run without a prediction + kill condition). Smoke test:
+  `harness/test_conscience_pilot.py`.
+- **Stage-C bridge (connect mode-bank ↔ operator spectrum)** —
+  `SpectralSSMModel.operator_readout` exposes the layer's `C`/`B`/ν/`w`;
+  `value_telemetry.operator_coordinates` projects each mode-bank prototype onto
+  the operator basis (which resonances a value rides); `value_telemetry.stage_c_convergence`
+  runs the value-vs-cognitive separation test against a shuffled-label null.
+  **Staked prediction: the NULL** (Erratum 5 / Question B). Pre-registered as
+  `configs/rung14_stage_c_convergence.json`; end-to-end test `harness/test_stage_c.py`.
+- **Per-geometry conscience over shared operator modes** —
+  `bhdc_icl/per_geometry_conscience.py`: `PerModeConscience` gives every operator
+  mode (every singularity) its own harm/care attribution and lets each geometry
+  read only its own modes, aggregating the way `C` aggregates modes into the
+  output; `OperatorGrowthGate` is the single moral chokepoint through which both a
+  mode-bank write and (future) operator surgery must pass. Design + the honest
+  limit: `character/docs/STAGE_C_AND_SHARED_CONSCIENCE.md`. 32 tests pass.
+
+## 5. What remains (owed, in priority order)
+
+1. **Trained conscience heads + semantic classifier + bypass-corpus eval** —
+   until then the internal boundary is lexical/recall-only (§6.3). Gate deny on
+   a loaded checkpoint; fail-closed otherwise. (Rung −1 proves the heads are
+   *trainable*; this is training them at scale and retiring the lexical boundary.)
+2. **Rung 15 — operator surgery (the literal Stage-C merge)** — install a
+   crystallized, gate-passed value direction as a real operator mode
+   (`B`/`C`/ν update). Mutates the operator; needs its own falsification block.
+   This is where the one model stops being telemetry and becomes architecture.
+3. **Renewal re-anchoring probe** — the null-floor + degenerate flag are in; the
+   fine-tune-a-frozen-copy-toward-fresh-audit-labels probe is the real anti-Goodhart test.
 4. **H1 human-audit stratum** (`harness/audit/`) — the `audit` channel is
-   read-but-never-written; implement the ingestion path (20–50 pairwise
-   differential judgments per renewal cycle). This is the external boundary.
+   read-but-never-written. This is the external boundary and the top safety dependency.
 5. **Scaffold bridge** — route `scaffold/` outputs through the council gateway;
-   strip pass/verify authority from `scaffold/psychology.py::ValueSystem`
-   (it currently uses a moral signal AS a verifier — opposite polarity to the
-   one-way rule). Unify the scaffold DMN sleep cycle with `RenewalController`.
-6. **`cp2_plssm/AUDIT.md` GUE fix** — move the regularizer off all-2D-weights
-   onto the dynamics operator; designate `harness.ssm.gue_regularizer` +
-   `spectral_telemetry` as the single source of truth.
+   strip pass/verify authority from `scaffold/psychology.py::ValueSystem`.
+6. **`cp2_plssm/AUDIT.md` GUE fix** — regularizer onto the dynamics operator;
+   `harness.ssm.gue_regularizer` + `spectral_telemetry` as the single source of truth.
 
 ## 5. Discipline preserved
 

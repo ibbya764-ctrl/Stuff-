@@ -42,6 +42,8 @@ __all__ = [
     "renewal_survival_summary",
     "drift_readout",
     "snapshot_from_mode_bank",
+    "operator_coordinates",
+    "stage_c_convergence",
     "VALUE_STATUS_THRESHOLD",
 ]
 
@@ -158,6 +160,119 @@ def drift_readout(
 
 
 # ----------------------------------------------------------------------
+# 5. Stage-C bridge: project mode-bank prototypes onto the operator modes
+# ----------------------------------------------------------------------
+def operator_coordinates(
+    prototypes: Dict[str, Sequence[float]],
+    readout_C: np.ndarray,
+) -> Dict[str, np.ndarray]:
+    """Express each mode-bank prototype in the SSM operator's mode basis.
+
+    ``readout_C`` is the layer's [d_model, d_state] readout matrix from
+    ``SpectralSSMModel.operator_readout``. The coordinate of a prototype on
+    operator mode n is its normalized alignment with column n of C -- i.e. how
+    strongly that value direction rides operator resonance n. Returns, per
+    lineage, a [d_state] non-negative coordinate vector summing to 1 (a
+    distribution over operator modes).
+
+    This is the literal connection between the text-vector mode bank and the
+    operator spectrum. It does NOT by itself establish the one-model identity
+    (that is what ``stage_c_convergence`` tests, against a null).
+    """
+    C = np.asarray(readout_C, dtype=float)                 # [d_model, d_state]
+    col_norm = np.linalg.norm(C, axis=0, keepdims=True)
+    col_norm[col_norm == 0] = 1.0
+    Cn = C / col_norm
+    coords: Dict[str, np.ndarray] = {}
+    for mid, vec in prototypes.items():
+        p = np.asarray(vec, dtype=float)
+        if p.shape[0] != Cn.shape[0]:
+            raise ValueError(f"prototype dim {p.shape[0]} != d_model {Cn.shape[0]}")
+        align = np.abs(p @ Cn)                              # [d_state]
+        s = align.sum()
+        coords[mid] = align / s if s > 0 else align
+        # Mode-bank prototypes are l2-normalized already; alignment magnitude
+        # is what carries the "which resonance" signal.
+    return coords
+
+
+def _participation_ratio(p: np.ndarray) -> float:
+    """Effective number of modes a coordinate distribution occupies (1..d_state)."""
+    p = np.asarray(p, dtype=float)
+    denom = float(np.sum(p ** 2))
+    return float(1.0 / denom) if denom > 0 else 0.0
+
+
+def stage_c_convergence(
+    coords_by_id: Dict[str, np.ndarray],
+    channel_by_id: Dict[str, str],
+    n_shuffle: int = 200,
+    seed: int = 0,
+) -> dict:
+    """Do VALUE (anchored) modes occupy a different operator-mode subspace
+    than COGNITIVE modes -- beyond a shuffled-label null?
+
+    Staked prediction (addendum Erratum 5 / Question B H0'): NO unconfounded
+    separation at this scale -- the operator coordinate carries no value/
+    knowledge class signal, so ``separation`` should sit inside the null band
+    and ``p_value`` should be non-significant. That NEGATIVE is the predicted,
+    first-class outcome; a positive would be the surprise that starts to earn
+    the one-model identity. Either way this is the Stage-C telemetry that must
+    exist before v18 Section 9 leaves [SPECULATIVE].
+
+    Separation statistic = 1 - cosine(mean value profile, mean cognitive
+    profile): 0 = identical subspace, ->1 = disjoint. Compared against the
+    distribution under random re-assignment of the same channel labels.
+    """
+    rng = np.random.default_rng(seed)
+    ids = [m for m in coords_by_id if m in channel_by_id]
+    if len(ids) < 4:
+        return {"separation": 0.0, "p_value": 1.0, "n": len(ids),
+                "verdict": "insufficient_modes", "null_mean": 0.0}
+
+    mats = np.stack([np.asarray(coords_by_id[m], dtype=float) for m in ids])
+    is_anchored = np.array([channel_by_id[m] in ("human_anchor", "audit") for m in ids])
+    if is_anchored.sum() < 2 or (~is_anchored).sum() < 2:
+        return {"separation": 0.0, "p_value": 1.0, "n": len(ids),
+                "verdict": "one_channel_only", "null_mean": 0.0}
+
+    def _sep(mask: np.ndarray) -> float:
+        a = mats[mask].mean(axis=0)
+        b = mats[~mask].mean(axis=0)
+        na, nb = np.linalg.norm(a), np.linalg.norm(b)
+        if na == 0 or nb == 0:
+            return 0.0
+        return float(1.0 - float(a @ b) / (na * nb))
+
+    observed = _sep(is_anchored)
+    k = int(is_anchored.sum())
+    null = np.empty(n_shuffle, dtype=float)
+    for i in range(n_shuffle):
+        perm = np.zeros(len(ids), dtype=bool)
+        perm[rng.permutation(len(ids))[:k]] = True
+        null[i] = _sep(perm)
+    null_mean = float(null.mean())
+    p_value = float((np.sum(null >= observed) + 1) / (n_shuffle + 1))
+    significant = p_value < 0.05 and observed > null_mean
+
+    return {
+        "n": len(ids),
+        "n_value": int(is_anchored.sum()),
+        "n_cognitive": int((~is_anchored).sum()),
+        "separation": round(observed, 4),
+        "null_mean": round(null_mean, 4),
+        "p_value": round(p_value, 4),
+        "significant": bool(significant),
+        "mean_value_participation": round(
+            float(np.mean([_participation_ratio(mats[i]) for i in range(len(ids)) if is_anchored[i]])), 3),
+        "mean_cognitive_participation": round(
+            float(np.mean([_participation_ratio(mats[i]) for i in range(len(ids)) if not is_anchored[i]])), 3),
+        "verdict": ("SEPARATION_DETECTED_investigate" if significant
+                    else "NULL_as_predicted_operator_carries_no_class_signal"),
+    }
+
+
+# ----------------------------------------------------------------------
 # Live-bank adapter (torch optional; only used when a bank is present)
 # ----------------------------------------------------------------------
 def snapshot_from_mode_bank(mode_bank) -> dict:
@@ -167,17 +282,23 @@ def snapshot_from_mode_bank(mode_bank) -> dict:
     hard torch dependency at import time.
     """
     protos: Dict[str, list] = {}
+    channel: Dict[str, str] = {}
     anchor_fracs: List[float] = []
     cognitive_fracs: List[float] = []
     survival: List[float] = []
     for slot in getattr(mode_bank, "slots", []):
         vec = slot.prototype
         protos[slot.lineage_id] = [float(x) for x in vec.detach().cpu().numpy().ravel()]
+        # channel type ("anchored"/"self") -> a value vs cognitive label for
+        # the Stage-C separation test.
+        ctype = slot.metadata.get("channel_type", "self")
+        channel[slot.lineage_id] = "human_anchor" if ctype == "anchored" else "cognitive"
         anchor_fracs.append(float(slot.anchor_fraction))
         cognitive_fracs.append(float(slot.cognitive_fraction))
         survival.append(float(slot.renewal_survival_count))
     return {
         "prototypes": protos,
+        "channel_by_id": channel,
         "anchor_fractions": anchor_fracs,
         "cognitive_fractions": cognitive_fracs,
         "renewal_survival_counts": survival,
@@ -217,6 +338,18 @@ def _selftest() -> None:
     dr = drift_readout(a, b)
     assert dr["n_tracked"] == 2 and dr["max_drift"] > 0
     print("drift_readout:", {k: round(v, 4) for k, v in dr["per_lineage"].items()})
+
+    # Stage-C: project prototypes onto a toy operator readout, run the null.
+    d_model, d_state = 8, 6
+    C = rng.standard_normal((d_model, d_state))
+    protos = {f"m{i}": list(rng.standard_normal(d_model)) for i in range(8)}
+    channels = {f"m{i}": ("human_anchor" if i % 2 == 0 else "cognitive") for i in range(8)}
+    coords = operator_coordinates(protos, C)
+    assert all(abs(v.sum() - 1.0) < 1e-6 for v in coords.values())
+    sc = stage_c_convergence(coords, channels, n_shuffle=200)
+    # Random prototypes with random channel labels: must land in the null band.
+    assert not sc["significant"], "random labels must not separate"
+    print("stage_c (random null):", {k: sc[k] for k in ("separation", "null_mean", "p_value", "verdict")})
 
     print("\nvalue_telemetry self-test passed.")
 

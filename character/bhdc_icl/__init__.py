@@ -67,6 +67,14 @@ from .perspective_humility import PerspectiveHumilityLayer, PerspectiveHypothesi
 from .geometry_council import GeometryNode, GeometryJudgement, GeometryCouncil, CouncilVerdict, default_geometry_nodes
 from .suggestion_question_policy import SuggestionQuestionPolicy, SuggestionQuestionReport
 from .geometry_model import BHDCGeometryCouncilModel, GeometryCouncilStepOutput
+from .per_geometry_conscience import (
+    PerModeConscience,
+    OperatorGrowthGate,
+    OperatorGrowthDecision,
+    PerGeometryVerdict,
+    GeometryMoralReadout,
+    ModeMoralAttribution,
+)
 from .safety import (
     CosmicPaternalismGuard,
     CosmicPaternalismVerdict,
@@ -98,4 +106,10 @@ __all__ += [
     "ParadiseGuardVerdict",
     "ValueModeSafetyGate",
     "ValueModeCandidate",
+    "PerModeConscience",
+    "OperatorGrowthGate",
+    "OperatorGrowthDecision",
+    "PerGeometryVerdict",
+    "GeometryMoralReadout",
+    "ModeMoralAttribution",
 ]

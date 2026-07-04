@@ -200,6 +200,28 @@ class SpectralSSMModel(nn.Module):
             cognitive_curvature = torch.ones(psi.shape[0], device=psi.device) * 0.1
         return {"psi": psi, "density": density, "cognitive_curvature": cognitive_curvature}
 
+    def operator_readout(self, layer: int = 0) -> dict:
+        """Expose one layer's operator mode basis for the Stage-C bridge.
+
+        Returns the readout coupling ``C`` [d_model, d_state] and the per-mode
+        frequency ``nu`` and width ``w``. A council mode-bank prototype (a
+        d_model direction) is projected onto ``C``'s columns to read *which
+        operator resonances that value rides* -- the connection between the
+        text-vector mode bank and the operator spectrum the v18 one-model
+        identity claims are the same object (see value_telemetry.stage_c_*).
+        """
+        blk = self.blocks[layer].ssm
+        with torch.no_grad():
+            w = torch.nn.functional.softplus(blk.w_raw)
+            if blk.width_mode == "critical_line":
+                w = w.expand(blk.d_state)
+            return {
+                "C": blk.C.detach().cpu().numpy(),          # [d_model, d_state]
+                "B": blk.B.detach().cpu().numpy(),          # [d_model, d_state]
+                "nu": blk.nu.detach().cpu().numpy(),        # [d_state]
+                "width": w.detach().cpu().numpy(),          # [d_state]
+            }
+
     # -- telemetry hooks ------------------------------------------------
     def dynamics_spectrum(self) -> np.ndarray:
         """All layers' dynamics eigenvalues, for spectral_telemetry."""
