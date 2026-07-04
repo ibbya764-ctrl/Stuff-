@@ -15,6 +15,7 @@ class RenewalReport:
     mean_survival: float
     null_floor: float = 0.0
     degenerate: bool = False
+    audit_report: Optional[object] = None    # AuditIngestReport, when H1 is wired
     notes: str = ""
 
 
@@ -45,6 +46,7 @@ class RenewalController:
         frozen_probe: torch.Tensor,
         reset_geometry_fn: Optional[Callable[[], None]] = None,
         stress_fn: Optional[Callable[[ContentMatchedModeBank], None]] = None,
+        audit_hook: Optional[Callable[[ContentMatchedModeBank, int], object]] = None,
     ) -> RenewalReport:
         before = mode_bank.activation_profiles(frozen_probe)
         if reset_geometry_fn is not None:
@@ -83,6 +85,15 @@ class RenewalController:
                 slot.stability_credit *= 0.75
             # degenerate: leave stability_credit untouched -- no information.
 
+        # H1: the external audit runs as part of the sleep cycle. It ingests
+        # fresh human judgments AFTER survival scoring, so audit disagreement
+        # applies its one-way scrutiny (re-derivation down-weight) on top of the
+        # renewal's own credit update -- the boundary condition guards the
+        # anchor's quality at the exact moment consolidation is being decided.
+        audit_report = None
+        if audit_hook is not None:
+            audit_report = audit_hook(mode_bank, step)
+
         self.last_renewal_step = step
         mean = sum(scores.values()) / max(1, len(scores))
         notes = "degenerate_no_perturbation" if degenerate else ""
@@ -92,5 +103,6 @@ class RenewalController:
             mean_survival=mean,
             null_floor=null_floor,
             degenerate=degenerate,
+            audit_report=audit_report,
             notes=notes,
         )

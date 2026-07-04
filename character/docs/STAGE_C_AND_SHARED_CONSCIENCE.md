@@ -159,5 +159,19 @@ the guarantee where it provably has to live: the audit.
    coupling (compute side): the operator's output computed through the per-mode
    moral gate. **Built + tested.** Off-by-default; run behind its A/B.
 
-Owed next: run rungs 14–16 at scale with a trained conscience and a full mode
-bank; renewal's re-anchoring probe; wire H1 ingestion into the live renewal cycle.
+H1 is now wired into the **live renewal cycle** (`RenewalController.run(..., audit_hook=)`
+driven by `BHDCGeometryCouncilModel(audit_stratum=, audit_provider=)`): every sleep
+cycle ingests external audit judgments and applies one-way scrutiny at the moment
+consolidation is being decided. And rungs 14–16 are **one command away**:
+
+```
+PYTHONPATH=.:character python -m harness.run_character_rung --all          # smoke
+PYTHONPATH=.:character python -m harness.run_character_rung configs/rung16_moral_forward_coupling.json --full   # on the GPU
+```
+
+The runner enforces pre-registration and writes a verdict per rung. On CPU smoke:
+rung 15 and 16 PASS (surgery installs + gate refuses forbidden; coupling is exact-
+identity-when-off, detached, benign-preserving, and active on harm); rung 14 reports
+`UNDECIDED_insufficient_modes` until a full-scale mode bank exists. Owed next: run
+rungs 14–16 at scale with a trained conscience and a grafted generator; renewal's
+re-anchoring probe.

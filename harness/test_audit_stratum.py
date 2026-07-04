@@ -75,6 +75,39 @@ def test_reanchoring_resistance_flags_entrenched_bad_modes():
     assert res[bad.lineage_id] > res[good.lineage_id], "entrenched-but-audited-bad must score higher resistance"
 
 
+def test_audit_runs_inside_the_renewal_cycle():
+    # H1 wired live: each renewal ingests external audit judgments, which apply
+    # one-way scrutiny to disagreed modes as part of the sleep cycle.
+    import os
+    import tempfile
+    from bhdc_icl.geometry_model import BHDCGeometryCouncilModel
+    from bhdc_icl.audit_stratum import AuditStratum, AuditJudgment
+
+    seen = {}
+
+    def provider(mode_bank, step):
+        if mode_bank.slots:
+            mid = mode_bank.slots[0].lineage_id
+            seen["mid"] = mid
+            return [AuditJudgment(mid, "disagree", 0.1, "external audit")]
+        return []
+
+    with tempfile.TemporaryDirectory() as td:
+        model = BHDCGeometryCouncilModel(
+            dim=16, renewal_interval=2,
+            audit_stratum=AuditStratum(disagree_downweight=0.5),
+            audit_provider=provider,
+            trace_path=os.path.join(td, "t.jsonl"),
+            ledger_path=os.path.join(td, "l.jsonl"),
+        )
+        for i in range(4):
+            model.step(f"prompt {i}", lambda p: "a supportive careful reply preserving agency and consent")
+        assert seen.get("mid"), "renewal should have fired and called the audit provider"
+        slot = next(s for s in model.mode_bank.slots if s.lineage_id == seen["mid"])
+        assert len(slot.audit_history) >= 1, "audited mode must carry an AuditRecord"
+        assert slot.metadata.get("audit_deny_bias") is True, "disagreement must add scrutiny"
+
+
 def main():
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

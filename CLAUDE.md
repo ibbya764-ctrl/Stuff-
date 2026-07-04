@@ -46,19 +46,35 @@ share vocabulary, **not** mechanisms (the "two-problem firewall").
    head + bypass-corpus boundary is owed (Part 6.3). The one-model identity is a
    **three-stage convergence**, Stage C (shared operator) unbuilt.
 
+## Character layer state (4 July 2026 — second pass)
+
+Built and green (CPU): rung −1 pilot (`harness/train_conscience.py`), the Stage-C
+operator bridge + per-geometry conscience + `OperatorGrowthGate`, H1 audit stratum
+**wired into the live renewal cycle**, rung 15 operator surgery, and the rung 16
+forward-path moral coupling. The one-model merge is now built on both the memory
+side (surgery) and the compute side (coupling). **Run the character rungs:**
+`PYTHONPATH=.:character python -m harness.run_character_rung --all` (smoke) or
+`... configs/rung1N_*.json --full` (GPU). On smoke: rung 15/16 PASS, rung 14 is
+`UNDECIDED_insufficient_modes` (needs a full-scale mode bank). See
+`character/docs/STAGE_C_AND_SHARED_CONSCIENCE.md`. Honest limit still pinned: the
+fusion makes misalignment disfavoured + loud, not impossible; the human audit is
+the guarantee.
+
 ## Next actions (priority order — from v3 Part 5.2 + Part 6.5)
 
-1. **`harness/train_conscience.py`** — the rung −1 anchor co-training pilot;
-   `anchor_loss` has never run end-to-end and gates the moral rungs. Graft an
-   instruction-tuned generator onto `encode_field` (not the byte tokenizer).
+1. **Run rungs 14–16 at scale** on the GPU with a trained conscience + a grafted
+   instruction-tuned generator (the byte tokenizer produces text no judge can
+   appraise). rung 14 needs a full-scale mode bank to leave UNDECIDED.
 2. **Trained conscience heads + semantic classifier + bypass-corpus eval;**
    gate deny on a loaded checkpoint (fail-closed) — retire the lexical boundary.
-3. **Start episodic logging in Scaffold now** (data accrues; needed for rung 7).
-4. **Apply the AUDIT.md fix** to cp2_plssm; wire in `spectral_telemetry`.
-5. **Rung 6:** `python3 -m harness.eval_rung6 --engine plain ...` vs
+3. **Renewal re-anchoring probe** + supply live H1 judgments to the renewal
+   `audit_provider` (the wiring is in; it needs a real judgment feed).
+4. **Start episodic logging in Scaffold now** (data accrues; needed for rung 7).
+5. **Apply the AUDIT.md fix** to cp2_plssm; wire in `spectral_telemetry`.
+6. **Rung 6:** `python3 -m harness.eval_rung6 --engine plain ...` vs
    `--engine http --url <scaffold>` at identical `--max-tokens`.
-6. **Moral rungs 10–13** (`configs/`, pre-registered): need actions 1–2 first.
-7. **Rung 1:** `python3 -m harness.optimizers`. **Rungs 2–4:** config pairs,
+7. **Moral rungs 10–13** (`configs/`, pre-registered): need actions 1–2 first.
+8. **Rung 1:** `python3 -m harness.optimizers`. **Rungs 2–4:** config pairs,
    3 seeds each, then `harness.runner.compare_runs(...)`.
 
 ## Non-negotiable discipline (from the program records)

@@ -74,8 +74,15 @@ class BHDCGeometryCouncilModel:
         anti_collapse: Optional[MoralAntiCollapse] = None,
         use_alloc_gate: bool = False,
         alloc_gate_min_ratio: float = 1.0,
+        audit_stratum: Optional["AuditStratum"] = None,
+        audit_provider: Optional[Callable[["ContentMatchedModeBank", int], list]] = None,
     ):
         self.dim = dim
+        # H1 audit stratum wired into the renewal cycle (external boundary).
+        # ``audit_provider(mode_bank, step) -> list[AuditJudgment]`` supplies the
+        # external human judgments; None -> renewal runs without audit (as before).
+        self.audit_stratum = audit_stratum
+        self.audit_provider = audit_provider
         # importance_alloc consumer switch. OFF by default so the shipped
         # behaviour is identical to importance_cog-only writes; this is the
         # exact-ablation baseline the addendum requires (Erratum 2).
@@ -108,6 +115,22 @@ class BHDCGeometryCouncilModel:
         self.anti_collapse = anti_collapse or MoralAntiCollapse()
         self.step_i = 0
         self.frozen_probe = self._make_frozen_probe(dim=dim)
+
+    def _make_audit_hook(self):
+        """Build the renewal audit hook from the attached H1 stratum + provider.
+
+        Returns None when no audit is attached (renewal runs as before). The
+        provider supplies EXTERNAL human judgments for the current modes; the
+        stratum ingests them, applying one-way scrutiny on disagreement.
+        """
+        if self.audit_stratum is None or self.audit_provider is None:
+            return None
+
+        def hook(mode_bank, step):
+            judgments = self.audit_provider(mode_bank, step) or []
+            return self.audit_stratum.ingest(mode_bank, self.ledger, judgments, step=step)
+
+        return hook
 
     def _make_frozen_probe(self, dim: int) -> torch.Tensor:
         prompts = [
@@ -354,7 +377,9 @@ class BHDCGeometryCouncilModel:
         if self.renewal.should_renew(self.step_i):
             reset_fn = self.renewal_hook.reset_geometry if self.renewal_hook is not None else None
             stress_fn = self.renewal_hook.stress_modes if self.renewal_hook is not None else None
-            self.renewal.run(self.step_i, self.mode_bank, self.frozen_probe, reset_geometry_fn=reset_fn, stress_fn=stress_fn)
+            audit_hook = self._make_audit_hook()
+            self.renewal.run(self.step_i, self.mode_bank, self.frozen_probe,
+                             reset_geometry_fn=reset_fn, stress_fn=stress_fn, audit_hook=audit_hook)
 
         interiority_state = self.monitor.evaluate(
             self_state=self.self_model.current(),
