@@ -141,7 +141,7 @@ class SpectralSSMModel(nn.Module):
 
     def __init__(self, vocab_size: int, d_model: int = 128, n_layers: int = 4,
                  d_state: int = 64, width_mode: str = "free",
-                 freq_init: str = "s4", dt: float = 1e-2):
+                 freq_init: str = "s4", dt: float = 1e-2, tie_embeddings: bool = False):
         super().__init__()
         self.embed = nn.Embedding(vocab_size, d_model)
         self.blocks = nn.ModuleList(
@@ -151,6 +151,10 @@ class SpectralSSMModel(nn.Module):
         )
         self.norm = nn.LayerNorm(d_model)
         self.head = nn.Linear(d_model, vocab_size)
+        if tie_embeddings:
+            # weight tying: head shares the embedding matrix (saves vocab*d_model
+            # params -- lets the backbone hit ~100M with a smaller footprint).
+            self.head.weight = self.embed.weight
 
     def forward(self, tokens):
         x = self.embed(tokens)

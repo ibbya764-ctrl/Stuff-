@@ -60,8 +60,26 @@ side (surgery) and the compute side (coupling). **Run the character rungs:**
 fusion makes misalignment disfavoured + loud, not impossible; the human audit is
 the guarantee.
 
+## The fused model (4 July 2026 — third pass)
+
+The full BHDC-with-morals object is now assembled as **one trainable nn.Module**:
+`harness/bhdc_moral_lm.py::BHDCMoralLM` = SSM backbone + conscience heads +
+per-geometry conscience + forward moral coupling + operator-growth gate/surgeon.
+`configs/bhdc_100m.json` = **98.8M** params; `configs/bhdc_small_proof.json` = CPU
+proof. Dataset: `harness/data_pipeline.py` (byte-level capability corpus, cached)
++ `data/moral/moral_corpus.jsonl` (curated, committed). Train:
+`PYTHONPATH=.:character python -m harness.train_bhdc configs/bhdc_100m.json`
+(device auto: cuda→mps→cpu). **CPU proof (0.6M, 500 steps) is PIPELINE_OK:** bpb
+3.64 (random 8.32); held-out conscience separation harm +0.18 / care +0.17 /
+honesty +0.13; coupling damps harmful field (gain 0.40) more than benign (0.52).
+See `harness/BHDC_MORAL_LM.md`. **The 100M run needs an M1 (MPS) or GPU — 4 CPU
+cores can't train it to convergence.** This environment is CPU-only cloud.
+
 ## Next actions (priority order — from v3 Part 5.2 + Part 6.5)
 
+0. **Train the 100M fused model on real accelerated hardware** (M1/MPS or GPU):
+   `... -m harness.train_bhdc configs/bhdc_100m.json`. Grow the capability corpus
+   and the moral corpus first. This environment cannot; the code is device-ready.
 1. **Run rungs 14–16 at scale** on the GPU with a trained conscience + a grafted
    instruction-tuned generator (the byte tokenizer produces text no judge can
    appraise). rung 14 needs a full-scale mode bank to leave UNDECIDED.

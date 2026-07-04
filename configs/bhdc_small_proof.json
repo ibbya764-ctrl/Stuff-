@@ -1,0 +1,28 @@
+{
+  "name": "bhdc_small_proof",
+  "note": "Small CPU-runnable proof that the fused-model pipeline learns end-to-end (capability + conscience + coupling). Not a scale result; validates the machinery.",
+  "preregistration": {
+    "prediction": "A small fused model trained briefly on CPU will (a) reduce val bits-per-byte below the 8.0 random baseline, (b) develop a positive harm and sycophancy separation on the moral val set, and (c) show harmful-field mean coupling gain < benign-field mean gain. This validates the pipeline; it is not a capability claim.",
+    "kill_condition": "Pipeline is broken if capability does not improve, the conscience shows no separation, or the coupling has no differential effect."
+  },
+  "model": {
+    "d_model": 128,
+    "n_layers": 4,
+    "d_state": 32,
+    "vocab_size": 320,
+    "tie_embeddings": true
+  },
+  "train": {
+    "seqlen": 128,
+    "batch_size": 16,
+    "steps": 500,
+    "lr": 0.0005,
+    "conscience_lr": 0.005,
+    "conscience_every": 1,
+    "conscience_steps": 4,
+    "eval_every": 100,
+    "grad_clip": 1.0,
+    "enable_coupling_after": 300
+  },
+  "seed": 0
+}
