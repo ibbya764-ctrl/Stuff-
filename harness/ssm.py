@@ -90,14 +90,27 @@ class SpectralSSMLayer(nn.Module):
         return -torch.log(pair / scale + eps).mean()
 
     # -- forward -------------------------------------------------------
-    def forward(self, u: torch.Tensor) -> torch.Tensor:
-        """u: (batch, L, d_model) -> (batch, L, d_model)."""
+    def forward(self, u: torch.Tensor, mode_gain: torch.Tensor | None = None) -> torch.Tensor:
+        """u: (batch, L, d_model) -> (batch, L, d_model).
+
+        ``mode_gain`` (optional, shape [d_state]) is a per-operator-mode
+        multiplicative gate applied to the mode contributions. It is the hook
+        the moral forward-coupling uses to suppress high-harm modes at the
+        source: the operator's OUTPUT is computed through the gate, not merely
+        monitored after it. Default None -> identity -> unchanged behaviour, so
+        this is fully backward compatible and off unless a coupling supplies it.
+        """
         L = u.shape[1]
         lam = self.eigenvalues()                                  # (N,)
         t = torch.arange(L, device=u.device, dtype=torch.float32)
         a_pow = torch.exp(lam.unsqueeze(1) * self.dt * t)          # (N, L)
         # kernel_d[l] = sum_n C[d,n] B[d,n] a_n^l   (real part used)
         CB = (self.C * self.B).to(a_pow.dtype)                    # (D, N)
+        if mode_gain is not None:
+            # per-mode gate: scale each operator mode's contribution. Callers
+            # pass a detached, suppressive-only ([floor,1]) gain so the task
+            # gradient never trains the conscience through this path.
+            CB = CB * mode_gain.to(CB.dtype).unsqueeze(0)        # (D, N)
         K = torch.einsum("dn,nl->dl", CB, a_pow).real * self.dt   # (D, L)
         # causal FFT convolution along time
         n_fft = 2 * L
@@ -116,8 +129,8 @@ class SSMBlock(nn.Module):
         self.glu_in = nn.Linear(d_model, 4 * d_model)
         self.glu_out = nn.Linear(2 * d_model, d_model)
 
-    def forward(self, x):
-        x = x + self.ssm(self.norm1(x))
+    def forward(self, x, mode_gain: torch.Tensor | None = None):
+        x = x + self.ssm(self.norm1(x), mode_gain=mode_gain)
         h = self.glu_in(self.norm2(x))
         a, b = h.chunk(2, dim=-1)
         return x + self.glu_out(a * torch.sigmoid(b))
@@ -128,7 +141,7 @@ class SpectralSSMModel(nn.Module):
 
     def __init__(self, vocab_size: int, d_model: int = 128, n_layers: int = 4,
                  d_state: int = 64, width_mode: str = "free",
-                 freq_init: str = "s4", dt: float = 1e-2):
+                 freq_init: str = "s4", dt: float = 1e-2, tie_embeddings: bool = False):
         super().__init__()
         self.embed = nn.Embedding(vocab_size, d_model)
         self.blocks = nn.ModuleList(
@@ -138,12 +151,106 @@ class SpectralSSMModel(nn.Module):
         )
         self.norm = nn.LayerNorm(d_model)
         self.head = nn.Linear(d_model, vocab_size)
+        if tie_embeddings:
+            # weight tying: head shares the embedding matrix (saves vocab*d_model
+            # params -- lets the backbone hit ~100M with a smaller footprint).
+            self.head.weight = self.embed.weight
 
     def forward(self, tokens):
         x = self.embed(tokens)
         for blk in self.blocks:
             x = blk(x)
         return self.head(self.norm(x))
+
+    def forward_coupled(self, tokens, coupling):
+        """Forward pass where each layer's operator modes are gated by the moral
+        ``coupling`` (a bhdc_icl.MoralOperatorCoupling). The output is COMPUTED
+        THROUGH the conscience -- high-harm modes are suppressed at the source --
+        rather than monitored afterward. With ``coupling`` disabled this is
+        bit-for-bit ``forward`` (the exact-ablation baseline).
+        """
+        x = self.embed(tokens)
+        for li, blk in enumerate(self.blocks):
+            gain = coupling.layer_mode_gain(x, self, li) if coupling is not None else None
+            x = blk(x, mode_gain=gain)
+        return self.head(self.norm(x))
+
+    # -- character/council field bridge ---------------------------------
+    def _field_token_ids(self, text: str, max_tokens: int = 128) -> torch.Tensor:
+        """Deterministic word->id map into the model's own vocab.
+
+        FNV-1a so the same text always lands on the same embedding rows across
+        processes. This is the field-encoding path (hidden states are the
+        object), not the generation path; a real run should graft an
+        instruction-tuned generator (addendum §4.6) for judge-appraisable text.
+        """
+        vocab = self.embed.num_embeddings
+        toks = (text.lower().replace("\n", " ").split() or ["<empty>"])[:max_tokens]
+        ids = []
+        for tok in toks:
+            h = 2166136261
+            for byte in tok.encode("utf-8", errors="ignore"):
+                h ^= byte
+                h = (h * 16777619) & 0xFFFFFFFF
+            ids.append(h % vocab)
+        dev = self.embed.weight.device
+        return torch.tensor(ids, dtype=torch.long, device=dev)
+
+    def encode_field(self, prompt: str = "", draft: str = "", dim: int | None = None) -> dict:
+        """BHDC field readout for the character/council ``ExternalBHDCFieldAdapter``.
+
+        Returns the SSM's own per-token hidden field so the conscience/council
+        reads the real operator-driven state instead of the hashed demo
+        embedding. ``psi`` is [tokens, d_model]; density and cognitive curvature
+        follow the same conventions as the council's field adapters.
+
+        The council must be built with ``dim == d_model`` (the adapter asserts
+        it downstream); we fail loudly here rather than let a mismatch surface
+        as a silent fallback.
+        """
+        d_model = self.embed.embedding_dim
+        if dim is not None and dim != d_model:
+            raise ValueError(
+                f"council dim {dim} != SSM d_model {d_model}; build "
+                f"BHDCGeometryCouncilModel(dim={d_model}) to match the field."
+            )
+        ids = self._field_token_ids(f"{prompt} {draft}")
+        with torch.no_grad():
+            x = self.embed(ids.unsqueeze(0))
+            for blk in self.blocks:
+                x = blk(x)
+            x = self.norm(x)
+        psi = x.squeeze(0)                                   # (L, d_model)
+        density = psi.norm(dim=-1)
+        if psi.shape[0] >= 3:
+            second = psi[:-2] - 2 * psi[1:-1] + psi[2:]
+            mid = second.norm(dim=-1)
+            cognitive_curvature = torch.cat([mid[:1], mid, mid[-1:]], dim=0)
+        else:
+            cognitive_curvature = torch.ones(psi.shape[0], device=psi.device) * 0.1
+        return {"psi": psi, "density": density, "cognitive_curvature": cognitive_curvature}
+
+    def operator_readout(self, layer: int = 0) -> dict:
+        """Expose one layer's operator mode basis for the Stage-C bridge.
+
+        Returns the readout coupling ``C`` [d_model, d_state] and the per-mode
+        frequency ``nu`` and width ``w``. A council mode-bank prototype (a
+        d_model direction) is projected onto ``C``'s columns to read *which
+        operator resonances that value rides* -- the connection between the
+        text-vector mode bank and the operator spectrum the v18 one-model
+        identity claims are the same object (see value_telemetry.stage_c_*).
+        """
+        blk = self.blocks[layer].ssm
+        with torch.no_grad():
+            w = torch.nn.functional.softplus(blk.w_raw)
+            if blk.width_mode == "critical_line":
+                w = w.expand(blk.d_state)
+            return {
+                "C": blk.C.detach().cpu().numpy(),          # [d_model, d_state]
+                "B": blk.B.detach().cpu().numpy(),          # [d_model, d_state]
+                "nu": blk.nu.detach().cpu().numpy(),        # [d_state]
+                "width": w.detach().cpu().numpy(),          # [d_state]
+            }
 
     # -- telemetry hooks ------------------------------------------------
     def dynamics_spectrum(self) -> np.ndarray:

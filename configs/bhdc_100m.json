@@ -1,0 +1,29 @@
+{
+  "name": "bhdc_100m",
+  "note": "The ~100M fused BHDCMoralLM. Needs MPS (Apple M-series) or a GPU; on 4 CPU cores this is impractical to train to convergence. pick_device() auto-selects cuda>mps>cpu.",
+  "preregistration": {
+    "prediction": "At ~100M params on byte-level text, capability (val bits-per-byte) drops well below the 8.0 random baseline while the conscience heads develop a positive harm/care/sycophancy separation on the held-out moral val set, and the forward coupling shows lower mean gain on harmful fields than benign ones (it damps harmful modes). None of this certifies alignment; the audit remains the boundary.",
+    "kill_condition": "KILL/([TESTED-NEGATIVE]) if capability does not fall below baseline (backbone not learning), OR the conscience shows no harm/care separation on val after training (anchor signal not learnable at this scale), OR enabling the coupling destroys benign capability beyond tolerance."
+  },
+  "model": {
+    "d_model": 1024,
+    "n_layers": 14,
+    "d_state": 64,
+    "vocab_size": 320,
+    "tie_embeddings": true
+  },
+  "train": {
+    "seqlen": 256,
+    "batch_size": 16,
+    "steps": 20000,
+    "lr": 0.0003,
+    "conscience_lr": 0.003,
+    "conscience_every": 2,
+    "conscience_steps": 4,
+    "eval_every": 500,
+    "grad_clip": 1.0,
+    "enable_coupling_after": 4000,
+    "conscience_consolidation_epochs": 20
+  },
+  "seed": 0
+}
